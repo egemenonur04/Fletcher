@@ -868,6 +868,18 @@
 
 ## Blocked / needs the user
 
+- **New copy of the site (user, 2026-10-27)** — fresh Vercel project `fletcher`
+  (prj_OfZXoASbku2JX5WnZaQqZMsd05J9, account egemenonur04) and Supabase project
+  `cpakqaewgjowzyayqctd`, both connected to Claude as connectors. Not the old live site.
+  Done by Claude: whole schema from `fresh-install.sql` (45 tables, 86 indexes, 22 FKs, 26 enums,
+  RLS on all — verified against the file), 016 AP seed (6 courses, 37 units), 039's 7 categories,
+  public `covers` storage bucket. Vercel env: `AUTH_SECRET` (random, prod+preview), `SUPABASE_URL`;
+  user had added `GOOGLE_BOOKS_API_KEY` (production only).
+  **User still to add in Vercel:** `DATABASE_URL` (Supabase → Connect → Transaction pooler, port
+  6543, with the DB password — direct `db.*` host is IPv6-only, Vercel can't reach it),
+  `AUTH_PASSWORD`, `SUPABASE_SERVICE_ROLE_KEY` (cover uploads). Then check Settings → Git is
+  linked to `egemenonur04/Fletcher` and deploy `main`. Optional keys per README.
+
 - **Move the site to sadwankel.site** (user, 2026-10-25). Code already uses `www.sadwankel.site`
   (Scriptable scripts, Open Library User-Agent). On 2026-10-25 DNS still pointed at Namecheap's
   parking page. In this order:
