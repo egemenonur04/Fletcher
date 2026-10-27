@@ -61,14 +61,11 @@ as the section above describes. Hand work (SQL, env vars) goes under "Blocked / 
 **Use judgment.** When there is a sensible default, pick it and say what you chose. Ask only when
 the decision is the user's: product direction, or a tradeoff where either choice loses something.
 
-# Soft Club
+# Look
 
-Visual work is for the **Soft Club** look only. Acid, Early Cyber, Cyberdelia and Classic are
-**archived** (owner, 2026-10-22): they stay selectable exactly as they are, but are no longer updated,
-redesigned or checked when something new is built.
+The site has one look, **Paper**, after remarkable.com (owner, 2026-10-27): black-and-white and
+minimalist. It replaced Soft Club, Acid, Early Cyber, Cyberdelia and Classic, which are gone.
 
-Before adding or changing anything that shows on the site, read `docs/design/soft-club.md` and the
-reference images in `docs/design/references/softclub/`. Follow those rules. Where an image and the
-document disagree, follow the image and update the document. Put the styling in the Soft Club
-section of `app/themes.css` (and `scripts/theme-palettes.mjs` if a colour changes) so the other
-looks are untouched.
+Before adding or changing anything that shows on the site, read `docs/design/paper.md` and follow
+it. Colours go in `scripts/palette.mjs` (regenerate `app/palette.css`); everything else in
+`app/design.css`.

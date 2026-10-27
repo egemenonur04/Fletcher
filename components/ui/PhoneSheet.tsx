@@ -19,7 +19,7 @@ const FOCUSABLE =
  * the bottom edge instead, over a scrim that dismisses it. Such steps sit in a page header's button
  * row, and on a phone that row is a few dozen pixels wide wherever it is laid out; the sheet is the
  * screen's width whatever its parent does. Rendered into <body>, because a frosted panel around the
- * row (backdrop-filter, as in the softclub look) would otherwise pin a fixed element inside itself.
+ * row (backdrop-filter, as on the headers) would otherwise pin a fixed element inside itself.
  *
  * Only ever mount it after a tap, never on the server render. Callers keep their inline version
  * for sm up and hide it on phones (`max-sm:hidden`).

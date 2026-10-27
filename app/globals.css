@@ -1,18 +1,18 @@
 @import "tailwindcss";
 
-/* Page colour and text follow the theme's palette; the typeface follows the theme. The themes
- * themselves (app/theme-palettes.css, app/themes.css) are imported by app/layout.tsx, not here:
+/* Page colour, text and typeface come from the look. The look itself (app/palette.css,
+ * app/design.css) is imported by app/layout.tsx, not here:
  * an @import placed after `@import "tailwindcss"` follows the hundreds of rules Tailwind expands
  * that line into, and CSS ignores an @import that comes after rules — so whether they survived
- * depended on the build. On Vercel they did not: the deployed stylesheet had no themes at all. */
+ * depended on the build. On Vercel they did not: the deployed stylesheet had no look at all. */
 body {
   background-color: var(--color-gray-50);
   color: var(--color-gray-900);
-  font-family: var(--theme-font-body);
+  font-family: var(--font-body);
 }
 
 /* The floating back button sits in the corner, above the home indicator, and the page can
- * scroll its last lines clear of it. The looks restyle the button itself. */
+ * scroll its last lines clear of it. */
 .floating-back {
   right: max(1rem, env(safe-area-inset-right, 0px));
   bottom: max(1rem, env(safe-area-inset-bottom, 0px));
@@ -62,7 +62,7 @@ body:has(.floating-back) main {
  *    the field alone (labels and hints around it keep the real sizes); text-lg and up are untouched.
  *  - a field with no size class inherits its parent's (preflight's `font: inherit`); max() keeps
  *    that when it is already 16px or more and raises it when it is not.
- * An arbitrary size on a field (text-[13px]) or a look in app/themes.css setting a field's
+ * An arbitrary size on a field (text-[13px]) or a rule in app/design.css setting a field's
  * font-size would beat this — there are none; the phone audit's zoom count catches a new one. */
 @layer base {
   @media (width < 40rem), (hover: none) and (pointer: coarse) and (height < 30rem) {

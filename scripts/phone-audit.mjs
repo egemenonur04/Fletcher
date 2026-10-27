@@ -1,4 +1,4 @@
-// Visits every phone-facing route at 390×844 in each look and reports:
+// Visits every phone-facing route at 390×844 and reports:
 //  - document scrollWidth past the viewport (sideways scroll)
 //  - text fields under 16px (iOS zoom-on-focus)
 //  - HTTP status other than 200
@@ -9,7 +9,6 @@ import { chromium } from "playwright-core";
 
 const BASE = process.env.NEXT_URL ?? "http://localhost:3000";
 const CHROME = process.env.CHROMIUM ?? "/usr/bin/google-chrome-stable";
-const THEMES = (process.env.THEMES ?? "softclub,acid,earlycyber,cyberdelia,classic").split(",");
 const now = new Date();
 const YEAR = now.getUTCFullYear();
 const MONTH = now.getUTCMonth() + 1;
@@ -155,33 +154,30 @@ async function main() {
   const fieldHits = [];
   let ok = 0;
 
-  for (const theme of THEMES) {
-    await context.addCookies([{ name: "theme", value: theme, url: BASE }]);
-    for (const route of ROUTES) {
-      const res = await page.goto(`${BASE}${route}`, { waitUntil: "domcontentloaded", timeout: 30_000 });
-      const status = res?.status() ?? 0;
-      if (status >= 400) {
-        failures.push({ theme, route, status, overflow: 0 });
-        continue;
-      }
-      await page.waitForLoadState("networkidle", { timeout: 15_000 }).catch(() => {});
-      const { overflow, fields } = await measure(page);
-      if (overflow > 1) failures.push({ theme, route, status, overflow: Math.round(overflow) });
-      else ok++;
-      for (const f of fields) fieldHits.push({ theme, route, ...f });
+  for (const route of ROUTES) {
+    const res = await page.goto(`${BASE}${route}`, { waitUntil: "domcontentloaded", timeout: 30_000 });
+    const status = res?.status() ?? 0;
+    if (status >= 400) {
+      failures.push({ route, status, overflow: 0 });
+      continue;
     }
+    await page.waitForLoadState("networkidle", { timeout: 15_000 }).catch(() => {});
+    const { overflow, fields } = await measure(page);
+    if (overflow > 1) failures.push({ route, status, overflow: Math.round(overflow) });
+    else ok++;
+    for (const f of fields) fieldHits.push({ route, ...f });
   }
 
   await browser.close();
 
-  console.log(`ok ${ok}/${THEMES.length * ROUTES.length} (routes × looks)`);
+  console.log(`ok ${ok}/${ROUTES.length} routes`);
   if (failures.length) {
     console.log("OVERFLOW / HTTP");
-    for (const f of failures) console.log(`  ${f.theme} ${f.route}  status=${f.status}  extra=${f.overflow}px`);
+    for (const f of failures) console.log(`  ${f.route}  status=${f.status}  extra=${f.overflow}px`);
   }
   if (fieldHits.length) {
     console.log("FIELDS < 16px");
-    for (const f of fieldHits) console.log(`  ${f.theme} ${f.route}  <${f.tag} type=${f.type} name=${f.name}> ${f.size}px`);
+    for (const f of fieldHits) console.log(`  ${f.route}  <${f.tag} type=${f.type} name=${f.name}> ${f.size}px`);
   }
   if (failures.length || fieldHits.length) process.exit(1);
 }

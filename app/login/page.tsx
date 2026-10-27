@@ -50,7 +50,7 @@ function LoginForm() {
           <div className="theme-gate-mark bg-gray-900 text-white p-3 rounded-xl mb-4">
             <Library className="w-6 h-6" />
           </div>
-          <h1 className="text-xl font-bold text-gray-900">MyLibrary</h1>
+          <h1 className="text-xl font-bold text-gray-900">My Portal</h1>
           <p className="text-sm text-gray-500 mt-1">Enter your password to continue</p>
         </div>
         <form onSubmit={handleSubmit} className="bg-white border border-gray-200 rounded-xl p-6 space-y-4">

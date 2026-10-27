@@ -5,7 +5,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ArrowLeft, Menu, X, type LucideIcon } from "lucide-react";
 import LogoutButton from "@/components/layout/LogoutButton";
-import ThemePicker from "@/components/ui/ThemePicker";
 
 export type NavItem = { href: string; label: string; icon: LucideIcon; exact?: boolean };
 export type NavGroup = { label?: string; items: NavItem[] };
@@ -19,9 +18,9 @@ const isActive = (pathname: string, item: NavItem) =>
  * to a top bar naming the section and the open page, whose menu button draws the same sidebar in
  * from the left as a drawer over the page.
  *
- * Desktop sidebar and drawer carry the hook classes the looks style a sidebar by (theme-sidebar,
+ * Desktop sidebar and drawer carry the hook classes app/design.css styles a sidebar by (theme-sidebar,
  * theme-brand, theme-nav, theme-nav-item[data-active]); the top bar is a theme-header, like the
- * other sections' headers. theme-topbar and theme-drawer mark the phone versions for the looks.
+ * other sections' headers. theme-topbar and theme-drawer mark the phone versions.
  */
 export default function SectionNav({ brand, icon: Icon, groups, signOut = false }: {
   brand: string;
@@ -61,7 +60,7 @@ export default function SectionNav({ brand, icon: Icon, groups, signOut = false 
     const root = document.documentElement;
     const overflow = root.style.overflow;
     root.style.overflow = "hidden";
-    // On window, so an open look menu inside gets the Escape first (it marks it handled).
+    // On window, so a menu open inside gets the Escape first (it marks it handled).
     const onKey = (e: globalThis.KeyboardEvent) => {
       if (e.key === "Escape" && !e.defaultPrevented) setOpen(false);
     };
@@ -112,8 +111,8 @@ export default function SectionNav({ brand, icon: Icon, groups, signOut = false 
       <span className="font-bold text-gray-900 text-lg">{brand}</span>
     </>
   );
-  // In the drawer the menu keeps its full height and the drawer scrolls on a short screen, even
-  // where a look clips the menu (acid, for its globe); its items are a finger's height.
+  // In the drawer the menu keeps its full height and the drawer scrolls on a short screen; its
+  // items are a finger's height.
   const nav = (inDrawer: boolean) => (
     <nav className={`theme-nav ${inDrawer ? "flex-[1_0_auto]" : "flex-1"} px-3 py-4 space-y-0.5`}>
       {groups.map((group, i) => (
@@ -142,10 +141,7 @@ export default function SectionNav({ brand, icon: Icon, groups, signOut = false 
   );
   const foot = (
     <>
-      <div className="pt-4 border-t border-gray-100">
-        <ThemePicker variant="compact" />
-      </div>
-      <div className="px-3 py-4 flex flex-col gap-1">
+      <div className="px-3 py-4 flex flex-col gap-1 border-t border-gray-200">
         <Link href="/" className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-colors">
           <ArrowLeft className="w-4 h-4 flex-shrink-0" />
           Back to Portal
@@ -163,7 +159,7 @@ export default function SectionNav({ brand, icon: Icon, groups, signOut = false 
         {foot}
       </aside>
 
-      {/* Phone: the top bar. Sticky on a wrapper, since the looks position the header itself. */}
+      {/* Phone: the top bar. Sticky on a wrapper, so the header itself stays free to style. */}
       <div className="sticky top-0 z-[55] lg:hidden">
         <header className="theme-header theme-topbar flex items-center gap-2 bg-white border-b border-gray-200 pt-[calc(0.375rem+env(safe-area-inset-top))] pb-1.5 pl-[max(0.375rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))]">
           <button ref={menuButton} type="button" aria-label="Menu" aria-expanded={open} aria-controls={drawerId}
@@ -178,7 +174,6 @@ export default function SectionNav({ brand, icon: Icon, groups, signOut = false 
           {page && (
             <>
               <span aria-hidden className="theme-topbar-sep text-gray-300">/</span>
-              {/* Keyed, so a look can animate the name as it changes. */}
               <span key={page} className="theme-topbar-page min-w-0 truncate text-sm font-semibold text-gray-900">{page}</span>
             </>
           )}
@@ -186,7 +181,7 @@ export default function SectionNav({ brand, icon: Icon, groups, signOut = false 
       </div>
 
       {/* Phone: the drawer. Always there, so it can slide out as well as in; hidden and inert
-          while closed. A look can retime the slide with --theme-drawer-time. As tall as the
+          while closed; --theme-drawer-time times the slide. As tall as the
           screen (dvh) rather than the layout viewport, which a page too wide for the screen
           stretches past it; and a drag on the dimmed page does nothing, so it can't pan. */}
       <div inert={!open}

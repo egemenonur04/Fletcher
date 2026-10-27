@@ -1,103 +1,40 @@
 import Link from "next/link";
-import { BookMarked, HeartPulse, Wallet, GraduationCap, ShoppingBag, ArrowRight } from "lucide-react";
-import ThemePicker from "@/components/ui/ThemePicker";
+import { BookMarked, HeartPulse, Wallet, GraduationCap, ShoppingBag, ArrowUpRight } from "lucide-react";
 
 const SECTIONS = [
-  {
-    href: "/library",
-    label: "Library",
-    description: "Books, anime, manga, games, movies & more",
-    icon: BookMarked,
-    color: "from-blue-50 to-indigo-50 border-blue-200",
-    iconColor: "text-blue-600",
-    available: true,
-  },
-  {
-    href: "/self-care",
-    label: "Self Care",
-    description: "Today's meal plan, and the wardrobe's washing calculator",
-    icon: HeartPulse,
-    color: "from-emerald-50 to-teal-50 border-emerald-200",
-    iconColor: "text-emerald-600",
-    available: true,
-  },
-  {
-    href: "/finances",
-    label: "Finances",
-    description: "Track monthly budget, expenses, and carryover",
-    icon: Wallet,
-    color: "from-emerald-50 to-green-50 border-emerald-200",
-    iconColor: "text-emerald-600",
-    available: true,
-  },
-  {
-    href: "/study",
-    label: "Study",
-    description: "Study sessions and the stats they level, APs, SAT vocabulary",
-    icon: GraduationCap,
-    color: "from-sky-50 to-cyan-50 border-sky-200",
-    iconColor: "text-sky-600",
-    available: true,
-  },
-  {
-    href: "/shopping",
-    label: "Shopping",
-    description: "Shops you've tried, by category — what was good and what wasn't",
-    icon: ShoppingBag,
-    color: "from-pink-50 to-rose-50 border-pink-200",
-    iconColor: "text-pink-600",
-    available: true,
-  },
-  {
-    href: "#",
-    label: "Coming Soon",
-    description: "More sections are on the way",
-    icon: ArrowRight,
-    color: "from-gray-50 to-gray-100 border-gray-200",
-    iconColor: "text-gray-300",
-    available: false,
-  },
+  { href: "/study", label: "Study", description: "Sessions and the stats they level, APs, planner, GPA", icon: GraduationCap },
+  { href: "/self-care", label: "Self Care", description: "Today's meal plan and water", icon: HeartPulse },
+  { href: "/finances", label: "Finances", description: "Monthly budget, expenses and carryover", icon: Wallet },
+  { href: "/library", label: "Library", description: "Manga, games, movies, comics and articles", icon: BookMarked },
+  { href: "/shopping", label: "Shopping", description: "Shops you've tried — what was good and what wasn't", icon: ShoppingBag },
 ];
 
 export default function PortalPage() {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      <header className="theme-header px-4 sm:px-8 py-6 border-b border-gray-200 bg-white">
-        <h1 className="text-xl font-bold text-gray-900">My Portal</h1>
-        <p className="text-sm text-gray-500 mt-0.5">Your personal hub</p>
-      </header>
+      <main className="flex-1 px-4 sm:px-8 py-12 sm:py-20">
+        <div className="max-w-5xl mx-auto">
+          <p className="text-sm text-gray-500">Your personal hub</p>
+          <h1 className="mt-2 text-4xl sm:text-6xl font-medium tracking-tight text-gray-900">My Portal</h1>
 
-      <main className="flex-1 p-4 sm:p-8">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-4xl">
-          {SECTIONS.map((section) => {
-            const Icon = section.icon;
-            return section.available ? (
-              <Link key={section.href} href={section.href}
-                className={`theme-tile group bg-gradient-to-br ${section.color} border rounded-xl p-6 hover:shadow-md transition-all`}>
-                <div className="flex items-center justify-between mb-4">
-                  <Icon className={`w-6 h-6 ${section.iconColor}`} />
-                  <ArrowRight className="w-4 h-4 text-gray-400 group-hover:translate-x-0.5 transition-transform" />
-                </div>
-                <p className="font-semibold text-gray-900 mb-1">{section.label}</p>
-                <p className="text-sm text-gray-500">{section.description}</p>
-              </Link>
-            ) : (
-              <div key={section.label}
-                className={`theme-tile bg-gradient-to-br ${section.color} border rounded-xl p-6 opacity-60`}>
-                <div className="flex items-center justify-between mb-4">
-                  <Icon className={`w-6 h-6 ${section.iconColor}`} />
-                </div>
-                <p className="font-semibold text-gray-400 mb-1">{section.label}</p>
-                <p className="text-sm text-gray-400">{section.description}</p>
-              </div>
-            );
-          })}
+          <ul className="mt-12 sm:mt-16 grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {SECTIONS.map(({ href, label, description, icon: Icon }) => (
+              <li key={href}>
+                <Link href={href}
+                  className="theme-tile group flex h-full flex-col justify-between gap-10 rounded-2xl border border-gray-200 p-6 sm:p-8 transition-colors">
+                  <div className="flex items-start justify-between">
+                    <Icon className="w-6 h-6 text-gray-900" strokeWidth={1.5} />
+                    <ArrowUpRight className="w-5 h-5 text-gray-400 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-gray-900 motion-reduce:transition-none" />
+                  </div>
+                  <div>
+                    <p className="text-xl font-medium tracking-tight text-gray-900">{label}</p>
+                    <p className="mt-1 text-sm text-gray-500">{description}</p>
+                  </div>
+                </Link>
+              </li>
+            ))}
+          </ul>
         </div>
-
-        <section className="max-w-4xl mt-12">
-          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">Look</h2>
-          <ThemePicker />
-        </section>
       </main>
     </div>
   );

@@ -1,0 +1,136 @@
+/* The site's one look: paper and ink, after remarkable.com.
+ *
+ * Colours are not here — app/palette.css (generated) swaps Tailwind's colour variables, which
+ * restyles every page by itself. This file adds what a palette cannot: type, radii, the absence of
+ * shadows, pill buttons, and the shells' details, keyed off hook classes (theme-sidebar,
+ * theme-brand, theme-nav-item[data-active], theme-header, theme-tile, theme-gate; on a phone,
+ * theme-topbar and theme-drawer — see SectionNav).
+ *
+ * Unlayered on purpose: unlayered rules beat Tailwind's layered utilities, so a rule here can
+ * restyle a utility (`.bg-gray-900`) without !important. The rules live in docs/design/paper.md. */
+
+:root {
+  --font-body: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  /* Sheets are softly rounded; the page never casts a shadow. */
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.25rem;
+  --shadow-sm: 0 0 #0000;
+  --shadow: 0 0 #0000;
+  --shadow-md: 0 0 #0000;
+  --shadow-lg: 0 0 #0000;
+  /* What floats over the page — a dialog, a menu, the drawer — is lifted just enough to read. */
+  --shadow-xl: 0 1px 2px rgb(27 27 25 / 0.06), 0 12px 32px rgb(27 27 25 / 0.1);
+  --shadow-2xl: var(--shadow-xl);
+  scrollbar-color: var(--color-gray-300) transparent;
+}
+
+::selection {
+  background: var(--color-gray-900);
+  color: var(--color-white);
+}
+
+/* Type: one sans, set quietly. Titles are large and medium-weight with tight tracking rather than
+ * bold; labels are small and grey, not shouted. */
+h1,
+h2.text-2xl,
+h2.text-xl {
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+h1.text-2xl,
+h1.text-xl,
+h2.text-2xl {
+  font-size: 1.75rem;
+  line-height: 2.25rem;
+}
+.font-bold {
+  font-weight: 600;
+}
+.uppercase.tracking-wide,
+.uppercase.tracking-wider {
+  letter-spacing: 0.06em;
+  font-weight: 500;
+}
+
+/* Buttons are pills: the main action in ink, the rest a hairline outline. A button that fills its
+ * row or holds two lines (a choice in a toggle group) keeps its softer rectangle. */
+:is(button, a):is(.bg-gray-900, .bg-emerald-600, .bg-green-600, .bg-red-600, .border):not(.w-full, .flex-1, .text-left, .theme-tile, .theme-nav-item) {
+  border-radius: 999px;
+}
+/* The sections' coloured actions are ink, like every other main action. */
+:is(button, a).bg-emerald-600,
+:is(button, a).bg-green-600 {
+  background-color: var(--color-gray-900);
+}
+:is(button, a):is(.bg-gray-900, .bg-emerald-600, .bg-green-600):hover:not(:disabled) {
+  background-color: var(--color-gray-700);
+}
+
+/* Fields are sheets with a hairline edge; focus is a thin ink ring, never a glow. */
+:is(input, select, textarea):focus-visible {
+  outline: none;
+  border-color: var(--color-gray-900);
+  box-shadow: 0 0 0 1px var(--color-gray-900);
+}
+:focus-visible {
+  outline-color: var(--color-gray-900);
+}
+.ring-offset-1,
+.ring-offset-2 {
+  --tw-ring-offset-color: var(--color-gray-50);
+}
+
+/* ── Shells ─────────────────────────────────────────────────────────────── */
+
+/* The sidebar is part of the page, not a white slab beside it: paper, with one hairline. */
+.theme-sidebar {
+  background-color: var(--color-gray-50);
+}
+.theme-brand {
+  letter-spacing: -0.02em;
+}
+.theme-brand .font-bold {
+  font-weight: 600;
+}
+.theme-nav-item {
+  border-radius: 999px;
+}
+
+/* Headers sit on the paper too, divided from the page by a hairline. */
+.theme-header {
+  background-color: color-mix(in srgb, var(--color-gray-50) 88%, transparent);
+  backdrop-filter: saturate(1.2) blur(12px);
+}
+
+/* The phone menu drawer is a sidebar, pinned to the screen's edge. */
+.theme-sidebar.theme-drawer {
+  position: absolute;
+}
+/* While the top bar is up (below lg) it is held over the page, so what focus or a #link scrolls
+ * to stops below it rather than under it. Not while the menu is open or its button has focus:
+ * held in place, they'd count as hidden behind the bar and the page would scroll to the top. */
+@media (width < 64rem) {
+  html:has(.theme-menu-button[aria-expanded="false"]:not(:focus)) {
+    scroll-padding-top: calc(4.5rem + env(safe-area-inset-top));
+  }
+}
+
+/* The portal's sections and the sign-in sheet. */
+.theme-tile {
+  background-color: var(--color-white);
+}
+.theme-tile:hover {
+  border-color: var(--color-gray-900);
+}
+.theme-gate-mark {
+  border-radius: 999px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto;
+  }
+}

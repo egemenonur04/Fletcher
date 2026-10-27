@@ -261,8 +261,12 @@ look with ONE black-and-white minimalist design modelled on remarkable.com (them
 questions come from College Board's SAT Suite Question Bank at runtime (unofficial endpoint;
 collegeboard.org is blocked from this sandbox, so the user tests first); delete Wardrobe, Books,
 Anime, TV (code + tables). Order: design first, then SAT, then Health.
-- [ ] **1. Design** — one theme, reMarkable look; remove ThemePicker, other looks, their fonts;
-      rewrite `docs/design/` and AGENTS.md's "Soft Club" section to point at the new design.
+- [x] **1. Design** (2026-10-27) — "Paper": `scripts/palette.mjs` → `app/palette.css` (warm paper
+      grays, hues drained except red/green/amber/rose) + `app/design.css` (Inter, medium titles, pill
+      buttons, no shadows). Picker, other looks, their fonts and SVG filters deleted; portal
+      redesigned; `docs/design/paper.md`; AGENTS.md/CODEBASE.md updated. Checked: typecheck, lint,
+      tests, build, screenshots at 1280 and 390 against a local Postgres. remarkable.com itself is
+      blocked from this sandbox — the look follows its known style, not a fetched copy.
 - [ ] **2. Delete** Wardrobe, Books, Anime, TV (pages, API, components, lib, Prisma models,
       a drop migration, fresh-install regenerated, nav/portal links).
 - [ ] **3. SAT category** — top-level section holding Vocabulary (moved from Study) and a
