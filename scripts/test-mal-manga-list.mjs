@@ -8,7 +8,7 @@ import { readFileSync } from "node:fs";
 import { readFirstSheetWithLinks, sheetLinks } from "../lib/xlsx-lite.ts";
 import {
   rowsFromMangaSheet, rowsFromMangaExport, rowsFromApiManga, mangaIdFromLink, mangaTypeKey, mangaLeftOut,
-  pickManga, isAnimeExport, cleanMangaTitle, progressCell,
+  pickManga, isAnimeExport, cleanMangaTitle, progressCell, searchQuery,
 } from "../lib/mal-manga-list.ts";
 
 let pass = 0;
@@ -95,6 +95,10 @@ const other = manga({ id: 5, title: "Spice", mediaType: "manga" });
 eq(pickManga({ title: "Spice & Wolf", mediaType: "manga" }, [wolfLn, wolfManga, other])?.id, 9116, "same title (& = and), same type wins");
 eq(pickManga({ title: "Spice & Wolf", mediaType: "unknown" }, [wolfLn, other])?.id, 9115, "same title, other type: still the title");
 eq(pickManga({ title: "Spice", mediaType: "manga" }, [wolfManga]), null, "no exact title: nothing, never a guess");
+
+eq(searchQuery("Berserk"), "Berserk", "short titles searched as they are");
+const long = "Cautious Hero: The Hero Is Overpowered but Overly Cautious Recap and a few more words";
+eq(searchQuery(long).length <= 64 && long.startsWith(searchQuery(long)) && !searchQuery(long).endsWith(" "), true, "long titles cut at a word");
 
 if (failures.length) {
   console.error(`✗ ${failures.length} failed, ${pass} passed\n  ${failures.join("\n  ")}`);

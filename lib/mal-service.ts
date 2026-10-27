@@ -1,26 +1,15 @@
 // Talking to MyAnimeList's official API (v2). Server-only: it reads MAL_CLIENT_ID, which must
-// never reach a browser — the API license forbids sharing it. Pure rules live in lib/mal.ts.
+// never reach a browser — the API license forbids sharing it. Pure rules live in lib/mal-manga.ts.
 //
-// Only documented endpoints: /anime?q= and /manga?q= (search), /anime/{id} (one entry, with its
-// related entries) and /manga/{id}. Public data needs only the Client ID, sent as X-MAL-CLIENT-ID —
-// no user login.
+// Only documented endpoints: /manga?q= (search), /manga/{id} and a user's public manga list.
+// Public data needs only the Client ID, sent as X-MAL-CLIENT-ID — no user login.
 
-import { byAiring, toEntry, type MalEntry } from "@/lib/mal";
 import { toManga, type MalManga } from "@/lib/mal-manga";
 import type { ListedManga } from "@/lib/mal-manga-list";
 
 /** Overridable so the importer can be tested against a local stand-in; production never sets it. */
 const BASE_URL = (process.env.MAL_BASE_URL ?? "https://api.myanimelist.net/v2").replace(/\/$/, "");
 
-/** How many entries one run may hold. Long-running franchises have ~20 seasons and films. */
-export const MAX_RUN = 40;
-
-/** Requests in flight at once. MyAnimeList does not publish a rate limit, so this stays gentle. */
-const CONCURRENCY = 3;
-
-// Episode length too: a whole-list import tells web shorts from seasons by it.
-const LIST_FIELDS = "id,title,main_picture,alternative_titles,start_date,media_type,num_episodes,status,average_episode_duration";
-const DETAIL_FIELDS = `${LIST_FIELDS},start_season,average_episode_duration,studios,related_anime`;
 const MANGA_FIELDS =
   "id,title,main_picture,alternative_titles,start_date,media_type,status,num_volumes,num_chapters,authors{first_name,last_name}";
 
@@ -67,78 +56,6 @@ async function get(path: string, params: Record<string, string>, refused?: strin
   return body;
 }
 
-/** Entries matching a search, in MyAnimeList's relevance order. MAL wants at least 3 letters. */
-export async function searchAnime(query: string): Promise<MalEntry[]> {
-  const body = await get("/anime", { q: query, limit: "15", fields: LIST_FIELDS });
-  const rows = Array.isArray(body.data) ? (body.data as Raw[]) : [];
-  return rows.map((row) => toEntry(row?.node as Raw | undefined)).filter((e): e is MalEntry => e !== null);
-}
-
-async function entry(id: number): Promise<MalEntry> {
-  const found = toEntry(await get(`/anime/${id}`, { fields: DETAIL_FIELDS }));
-  if (!found) throw new MalError("MyAnimeList sent that entry without a title.", 502);
-  return found;
-}
-
-/**
- * Each entry's details, a few at a time. One MyAnimeList cannot find is reported rather than
- * failing the batch — anything else (the Client ID, the rate limit) would fail every one of them.
- */
-export async function entryDetails(
-  ids: number[],
-): Promise<{ entries: MalEntry[]; failed: { malId: number; reason: string }[] }> {
-  const entries: MalEntry[] = [];
-  const failed: { malId: number; reason: string }[] = [];
-  let next = 0;
-  async function worker() {
-    while (next < ids.length) {
-      const id = ids[next++];
-      try {
-        entries.push(await entry(id));
-      } catch (e) {
-        if (!(e instanceof MalError) || e.status !== 404) throw e;
-        failed.push({ malId: id, reason: "not found on MyAnimeList" });
-      }
-    }
-  }
-  await Promise.all(Array.from({ length: Math.min(CONCURRENCY, ids.length) }, worker));
-  return { entries: entries.sort(byAiring), failed };
-}
-
-/**
- * A whole run: the entry, and everything reachable from it through sequel and prequel links —
- * the main line, films included when MAL files them as sequels. Side stories, spin-offs and
- * recaps hang off other links and are left out. In watch order; at most MAX_RUN entries — for a
- * longer franchise, the ones nearest the entry picked, since the walk spreads out from it.
- */
-export async function walkRun(startId: number): Promise<{ entries: MalEntry[]; truncated: boolean }> {
-  const found = new Map<number, MalEntry>();
-  // Every id asked for, found or not: a link to an entry MAL no longer has is tried once.
-  const tried = new Set<number>([startId]);
-  let frontier = [startId];
-  let truncated = false;
-
-  while (frontier.length > 0) {
-    const room = MAX_RUN - found.size;
-    if (frontier.length > room) {
-      truncated = true;
-      frontier = frontier.slice(0, room);
-    }
-    if (frontier.length === 0) break;
-    const { entries } = await entryDetails(frontier);
-    // The entry asked for must exist; a missing link further along is just skipped.
-    if (found.size === 0 && entries.length === 0) throw new MalError("That isn't on MyAnimeList.", 404);
-    const nextIds = new Set<number>();
-    for (const e of entries) {
-      found.set(e.id, e);
-      for (const id of [...e.sequels, ...e.prequels]) if (!tried.has(id)) nextIds.add(id);
-    }
-    frontier = [...nextIds];
-    for (const id of frontier) tried.add(id);
-  }
-  return { entries: [...found.values()].sort(byAiring), truncated };
-}
-
 /** Manga matching a search, in MyAnimeList's relevance order. MAL wants at least 3 letters. */
 export async function searchManga(query: string): Promise<MalManga[]> {
   const body = await get("/manga", { q: query, limit: "15", fields: MANGA_FIELDS });
@@ -153,39 +70,10 @@ export async function mangaEntry(id: number): Promise<MalManga> {
   return found;
 }
 
-/** What a whole-list import needs per entry: the entry, and your score for it. */
-export interface ListedEntry {
-  entry: MalEntry;
-  score: number | null;
-}
-
 /**
- * Everything on a user's public list with the status "completed", a thousand at a time. Only the
- * Client ID is sent — MyAnimeList may answer that a list needs its owner signed in, or is private;
- * then the list file is the way in.
- */
-export async function userCompleted(user: string): Promise<ListedEntry[]> {
-  const out: ListedEntry[] = [];
-  for (let offset = 0; offset < 20_000; offset += 1000) {
-    const body = await get(
-      `/users/${encodeURIComponent(user)}/animelist`,
-      { status: "completed", limit: "1000", offset: String(offset), fields: `${LIST_FIELDS},list_status`, nsfw: "true" },
-      "MyAnimeList wouldn't share that list with the site — it may be private, or need you signed in. Upload your list file instead.",
-    );
-    const rows = Array.isArray(body.data) ? (body.data as Raw[]) : [];
-    for (const row of rows) {
-      const entry = toEntry(row?.node as Raw | undefined);
-      const score = Number((row?.list_status as Raw | undefined)?.score);
-      if (entry) out.push({ entry, score: Number.isInteger(score) && score >= 1 && score <= 10 ? score : null });
-    }
-    if (rows.length < 1000) break;
-  }
-  return out;
-}
-
-/**
- * Everything on a user's public manga list, with your status and how far you are on each — the
- * same way as userCompleted for anime.
+ * Everything on a user's public manga list, with your status and how far you are on each, a
+ * thousand at a time. Only the Client ID is sent — MyAnimeList may answer that a list needs its
+ * owner signed in, or is private; then the list file is the way in.
  */
 export async function userMangaList(user: string): Promise<ListedManga[]> {
   const out: ListedManga[] = [];

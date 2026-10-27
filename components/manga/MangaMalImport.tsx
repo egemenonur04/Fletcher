@@ -5,8 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Check, Download, Link2, Loader2, Search } from "lucide-react";
 import { inputCls } from "@/components/ui/form";
-import { MalNotice, Poster } from "@/components/tmdb/TmdbParts";
-import { Toggle } from "@/components/anime/MalImport";
+import { MalNotice, Poster, Toggle } from "@/components/tmdb/TmdbParts";
 import { LANGUAGE_OPTIONS, type LanguageKey } from "@/lib/constants/languages";
 
 interface Place {

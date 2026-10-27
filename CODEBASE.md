@@ -1,6 +1,6 @@
 # MyPortal — architecture
 
-A personal hub: **Library**, **Self Care** (diet and wardrobe), **Finances**, **Study** and **Shopping**, behind one
+A personal hub: **Library**, **Self Care** (diet), **Finances**, **Study** and **Shopping**, behind one
 password. Next.js App Router on Vercel, Prisma against Supabase Postgres, Tailwind.
 
 This file covers how the pieces fit and the conventions that hold across them. For what is done
@@ -71,17 +71,15 @@ script on the phone.
 36 models, 22 enums. The shape by area:
 
 **Library.** Each medium has a status derived from progress counts, never set by hand
-(`lib/derive-status.ts`). Four media have parent hierarchies with `SET NULL` foreign keys, so
+(`lib/derive-status.ts`). Two media have parent hierarchies with `SET NULL` foreign keys, so
 deleting a parent orphans children rather than destroying them:
 
-- Books — `BookUniverse → BookSeries → Book`
-- Anime — `AnimeUniverse → AnimeSeries → Anime`
-- TV — `TvUniverse → TvSeries → TvShow`
 - Films — `MovieUniverse → Movie` (no series tier)
 - Comics — `ComicPublisher → ComicUniverse → ComicTitle → ComicIssue`, the one hierarchy where
   the leaf is an issue rather than the work itself
 
-Standalone: `Manga`, `Game`, `Article`, `Garment`.
+Standalone: `Manga`, `Game`, `Article`. (Books, Anime, TV and the Wardrobe were removed on
+2026-10-27; migration 041 drops their tables.)
 
 **Comics from Comic Vine.** "Add Comic" searches Comic Vine and imports a whole run: the comic, named
 with its start year ("The Amazing Spider-Man (1963)" — Marvel reuses titles), and every issue with its
@@ -112,66 +110,7 @@ attribution notice and logo wherever its data is used (`TMDB_NOTICE`, `public/tm
 Watched toggle. (IMDb was the first choice; its Conditions of Use forbid robots and scraping without
 written consent and it has no public API, so it is not used.)
 
-**TV shows from TMDB.** "Add Show" (main page) and "Add Series" (in a universe) search TMDB for
-shows and keyword tags (TV has no TMDB collections). A show becomes a `TvSeries` (`tmdbId` unique,
-`imdbId` for the link) and every numbered season a `TvShow` row titled "Name | Season N" — specials
-(season 0) are left out. Each season's runtime is the average of its episodes' runtimes (falling back
-to the show's average, its listed runtime, then 45); its episode count is the episodes TMDB lists.
-Seasons are fetched by appending `season/N` to `/tv/{id}`, 20 per call (TMDB's limit). "Watched"
-imports mark only aired episodes (air date ≤ today in the app's zone), so an airing season lands as
-Watching. Re-importing — "Check for new seasons" on a series — runs `placeSeries` + `planSeasons`:
-adds missing seasons, raises an episode count TMDB has grown (never lowers it; status re-derived),
-fills blank year/poster/creator/network, and never touches episodes watched, title, runtime,
-rating, rewatches, notes or language. A season's year stays blank until TMDB dates it, since a stored
-year is never overwritten. Placement follows films (moved/linked/already/elsewhere); a name clash in
-a universe gets the start year ("The Office (2005)"). Each show lands in its own interactive
-transaction holding `pg_advisory_xact_lock(namespace, tmdbId)`, so a double tap makes one series.
-Season cards carry −/+/All episode buttons; time watched (episodes × runtime × passes,
-`tvWatchedMinutes`) shows on the TV page, universe and series headers via `formatTotalTime`.
-
-**Anime from MyAnimeList.** "Add Anime" and a universe's "Add Series" search MyAnimeList through its
-official API v2 (`MAL_CLIENT_ID`, sent as `X-MAL-CLIENT-ID`; server-only — the license forbids sharing
-it). Not the website (robots.txt turns away Claude's crawlers) and not Jikan (it scrapes the website).
-On MAL every season, film and special is its own entry, so `Anime.malId` is per row (unique). Picking
-any entry walks its run over sequel/prequel links only (`walkRun`, ≤ 40, nearest first; side stories,
-spin-offs, recaps excluded; a broken link tried once) → a preview in watch order (start date) →
-ticked entries become one series, numbered in order; music/promo entries start unticked. A single
-entry imported standalone stays a single anime. Titles are stored exactly as MAL gives them — English
-or MAL's main (romaji) title by a toggle — since the license forbids altering its content. Matching
-(`matchEntries`): MAL id, else once by any of its titles + year against rows added by hand; titles
-that differ more than punctuation/case are not matched, so a kept hand library can gain duplicates
-(hence the optional 028 clean slate). `chooseSeries`: the series holding most matched rows; else a
-same-named series with nothing from MAL in it; else new (name + year, then MAL id, if taken).
-`planEntries` only adds: fills studio/airing season/year/poster/season number, raises an episode
-count, never touches title, episodes watched, episode length, rating, rewatches, notes, language.
-"Watched" marks finished entries fully; airing ones stay at 0 (MAL has no episode dates). "Check for
-new seasons" (`refreshSeries`) walks again and adds only entries newer than the newest the series has
-(not music/promos), keeping the series' title language. Per-run advisory locks (sorted ids) inside an
-interactive transaction stop a double tap duplicating. Posters hotlinked from cdn.myanimelist.net,
-excluded from mirroring. `normaliseTitle` drops apostrophes ("Journey's" = "Journeys").
-
-**A whole MyAnimeList list at once** (`/library/anime/import`, linked from Add Anime;
-`MalListImport`). There are three ways in:
-- a username: `GET /api/anime/mal/list` → MAL's `/users/{name}/animelist?status=completed`, with
-  only the Client ID. Unverified whether MAL serves another user's list without OAuth; a 401/403
-  says so and points to the file.
-- a copy of the list page saved as .xlsx: titles only, no ids. It is read in the browser by
-  `lib/xlsx-lite.ts`, a ~120-line zip+XML reader on `DecompressionStream`, so no new dependency.
-- MAL's own export (.xml or .xml.gz): has ids.
-
-`lib/mal-list.ts` (tested) decides what is a season: TV, or ONA, with ≥2 episodes, and for ONA
-episodes ≥10 minutes. TV keeps short-episode seasons (Saiki K. season 1 is 120 × 5 min).
-Everything else is left out with a reason (film, OVA, special, TV special/recap, music, promo,
-web short, one-off), and is listed and tickable if MAL data is known. Title-only rows are found
-through the existing search route, 3 at a time: `pickEntry` needs an exact normalised title (main,
-English or synonym), then same type and episode count decide between same-named entries. There is
-no fuzzy guess; unmatched rows are listed as "not found". `LIST_FIELDS` now carries
-`average_episode_duration` for this. Importing walks each ticked season's run (existing run
-route) to group the ticked seasons of one show, then posts them to the existing import as
-watched. So series, matching and fill-blanks all behave as in the single import. Already-imported
-seasons start unticked, so a re-run is a no-op.
-
-**Manga from MyAnimeList.** Same API and Client ID (`/manga?q=`, `/manga/{id}` with
+**Manga from MyAnimeList.** The official MAL API, with `MAL_CLIENT_ID` (`/manga?q=`, `/manga/{id}` with
 `authors{first_name,last_name}`). On MAL a manga is one entry for the whole series, so there is no
 run to walk: one entry, one row, linked by `Manga.malId` (unique, 032). "Add Manga" searches MAL
 first (`MangaMalImport`): format from `media_type` (manhwa/manhua, else manga); author from the
@@ -180,66 +119,25 @@ credited — the column is required); MAL's 0 volumes/chapters = unknown; publis
 not yet published = `ongoing`. Publisher isn't filled (MAL gives the magazine, not the publisher).
 Options: To read / Read (finished series only — counts set to the totals, status derived as
 usual), Japanese / English title, and the reading language (starts on the library's most common
-one). Light novels and novels are listed but not imported — they belong in Books. `matchExisting`:
+one). Light novels and novels are listed but not imported. `matchExisting`:
 MAL id, else an unlinked row whose normalised title equals any of the entry's titles → that row is
 linked instead of a duplicate; a unique-index clash from a concurrent import reads as "already".
 A hand-added manga's page has "Find on MyAnimeList" (links that row whatever its title); a linked
 one has "Check MyAnimeList" (`refreshManga`). Linking and checking only fill blanks and grow counts
 (`updatesFromManga`) — title, progress, rating, notes, language and publisher are never touched;
 status is re-derived so a series that just ended can complete. Covers hotlinked and excluded from
-manga mirroring, like anime.
+manga mirroring.
 
 **Importing a whole manga list** (`/library/manga/import`, "Import list" on the Manga page). Sources:
 a public user's Completed manga list (`/users/{name}/mangalist`), MAL's manga export, or an .xlsx copy
 of the list page — each title cell links to `/manga/{id}`, read by `sheetLinks` (or the cover's address
 as text), so lines carry their id; a link-less line is matched by exact title (`pickManga`) at import. `lib/mal-manga-list.ts`: novels
-(Books) and on hold/dropped/planned are left out. A list page copy may be the Completed tab or "All
+and on hold/dropped/planned are left out. A list page copy may be the Completed tab or "All
 Manga" (no Type column; "read / total" in Chapters marks one being read, a bare count one finished).
 One manga per line, each through the ordinary `/api/manga/mal/import` — finished as read, reading
 with `progress` (chapters/volumes, capped at the series' totals); already-linked ones start unticked (`/api/manga/mal/places`, database
-only). Requests go through `lib/fetch-retry.ts` (shared with the anime list import): up to 5 tries with
+only). Requests go through `lib/fetch-retry.ts`: up to 5 tries with
 5–45 s pauses on 429/5xx/connection loss; whatever still fails is offered again from the result.
-
-**Books from Google Books.** "Add Book" searches Google Books `/volumes` for a title, an author,
-an ISBN or a pasted volume id. Results start **unticked** — All/None are explicit. Google Books
-is edition-centric, and each publisher titles its edition its own way ("Mistborn: The Final Empire",
-"The Final Empire", "The Final Empire: Mistborn Book One", "Mistborn: Collector's Tenth Anniversary
-Limited Edition"). `groupEditions` reads a title as segments, sets aside edition dressing and series
-positions, drops series names (also as a title's lead word: "Mistborn The Final Empire"), and groups
-what names the same book. A bare series name ("Mistborn: Mistborn Book One") joins the book of that
-number a listing or Google's `seriesInfo` names — for book 1, else the series' earliest — unless it
-is half again as long (the series in one volume). Volume numbers and format words keep "Vol. 1" from
-"Vol. 2" and the light novel from the manga; boxed sets, and listings naming two books of the list,
-stand alone. Study guides (BookCaps, SparkNotes…) are dropped. A row's face is a print edition with a
-cover of the book's usual length. Google serves "image not available" (575×750 / 128×170 PNG) for a
-cover it lacks: the flow falls back to zoom=1, then drops the edition.
-Search is one row per book. Choosing it opens a Cover Flow
-(`docs/design/how-cover-flow-works.md`, `components/books/EditionCoverFlow.tsx`) of every English
-edition with a cover — print oldest first, then eBooks; only a listing with the same ISBN (or
-identical details) is a duplicate — and whether you own a physical copy or a Kindle, and only then is
-it imported. English means tagged `en`, or untagged/`un` with an English title (no "el", "der"…). The
-search only holds the editions that ranked among other books, so Choose also asks
-`/api/books/openlibrary/editions` (the row's volume id; two pages for the title, one each for the
-halves of a "Series: Title", with `inauthor:`) and merges what it finds; the centred edition stays
-centred as the list grows. A page count the list left out is fetched only for the edition the flow
-stops on (`/api/books/openlibrary/edition`), and Import waits for it. The picker shows Google's 300px
-cover (zoom=2). `volumes.list` reports 0 pages for a paperback with no preview;
-every such row is fetched again with `volumes.get`. One `googleBooksId` (036, unique) is stored.
-Google's title and subtitle are joined (Mistborn + The Final Empire), and a tagged
-translation is left out. `langRestrict=en` is not sent: it drops books Google tagged `un`
-and can return nothing. A book with no language tag still shows. Hits whose title fits the
-query rank first. An ISBN still opens that exact edition. Search shows what the first two
-pages of results contain (80 volumes) once a page count is known. Tick one or several into a series you pick, or
-standalone. Language is yours. "Read" marks every page; re-import only fills blanks.
-`matchExisting`: Google Books id, else title + author (including a row that still has an
-`openLibraryId` from an earlier import, so the two never duplicate). A volume with no page count
-is omitted from search — pages are required to import. Goodreads has no public API. Covers
-hotlinked from books.google.com (and leftover covers.openlibrary.org URLs), shown `unoptimized`,
-excluded from mirroring. A hand-added book's page has "Find on Google Books"; a linked one has
-"Check Google Books" (`refreshBook`) — cover, an author of "Unknown", and a publisher, only;
-title, pages, progress, rating, notes and language stay. Google is credited. Search wants
-`GOOGLE_BOOKS_API_KEY`; without it a 403/429 is an error. `Book.openLibraryId` (035) is kept on
-existing rows and is no longer written.
 
 **Finances.** `FinanceConfig` (budget), `Expense`, `AdditionalIncome`, `Subscription`. Expenses
 carry a unique `clientId` so the offline logger can retry without duplicating — a client-side
@@ -386,8 +284,8 @@ The rules are in `docs/design/paper.md`.
 ```
 app/
   (portal)          app/page.tsx — the four section cards
-  library/…         eight media types, each list / detail / edit / new
-  self-care/…       the day's meals from the diet plan (/self-care, installable as "Diet", works offline); wardrobe/… garments and wash loads
+  library/…         five media types, each list / detail / edit / new
+  self-care/…       the day's meals from the diet plan (/self-care, installable as "Diet", works offline)
   finances/…        month view, plus /log (installable PWA)
   study/…           sessions, modules, stats, APs, SAT vocabulary
   shopping/…        shops by category (a metro map); a shop's page with its products; new / edit
@@ -413,14 +311,10 @@ scriptable/             the phone widgets (Diet, Water) for the Scriptable app, 
 | `study.ts` / `study-service.ts` | Session and XP rules (client-safe) / Prisma side |
 | `comicvine.ts` / `comicvine-service.ts` / `comicvine-import.ts` | Issue numbers, covers and the merge rule / the API client / landing a run in a universe |
 | `tmdb.ts` / `tmdb-service.ts` / `tmdb-import.ts` | Reading TMDB's answers and the merge rule / the API client / landing films in the library |
-| `tmdb-tv.ts` / `tmdb-tv-import.ts` | Shows: reading seasons, `placeSeries` and `planSeasons` / landing shows as series + seasons |
-| `mal.ts` / `mal-service.ts` / `mal-import.ts` | Anime: reading entries and the merge rules / the MAL API client and run walk / landing runs as series |
-| `mal-list.ts` / `xlsx-lite.ts` | Whole-list import: what counts as a season, reading list files, matching title-only rows / reading an .xlsx (cells and hyperlinks) without a dependency |
-| `mal-manga-list.ts` / `fetch-retry.ts` | Whole manga list import: reading list files and ids, what is left out / the retrying fetch both list imports use |
+| `mal.ts` / `mal-service.ts` | MAL's image CDN / the MAL API client (manga search, entries, a user's list) |
+| `xlsx-lite.ts` | Reading an .xlsx (cells and hyperlinks) without a dependency |
+| `mal-manga-list.ts` / `fetch-retry.ts` | Whole manga list import: reading list files and ids, what is left out / the retrying fetch the list import uses |
 | `mal-manga.ts` / `mal-manga-import.ts` | Manga: reading MAL entries, format/credits/ongoing and the fill-blanks rules / landing, linking and checking one in the database |
-| `openlibrary.ts` / `openlibrary-import.ts` | Books: fill-blanks merge (Google Books id, or title+author, including leftover Open Library ids) / landing, linking and checking them |
-| `google-books.ts` / `google-books-service.ts` / `book-catalog-service.ts` | Books: reading Google Books volumes, covers, collapsing editions / the API client (`GOOGLE_BOOKS_API_KEY`) / searching and fetching volumes |
-| `themes.ts` / `theme-client.ts` | The looks and the cookie that picks one / applying a look in the browser |
 | `goals.ts` / `goal-schema.ts` | Weekly-goal arithmetic and its wording / the zod rule both goal routes share |
 | `review.ts` / `review-service.ts` | The daily review's rules — day boundaries, streaks, level-ups / its queries |
 | `leveling.ts` | The XP curve: `level = floor(k · ln(1 + xp/30k))`, k = 10 |
@@ -441,7 +335,7 @@ scriptable/             the phone widgets (Diet, Water) for the Scriptable app, 
 
 `npm test` runs plain node scripts over the pure modules — status derivation, date maths, the
 XP rule, the level curve, the vocabulary parser and question builder, the daily review, the
-report token, the Comic Vine, TMDB (film and TV), MyAnimeList (anime and manga) and Google Books (books) merge rules, the shopping
+report token, the Comic Vine, TMDB (film) and MyAnimeList (manga) merge rules, the shopping
 rules (addresses, categories, line codes), the finance pots (carryover per source, balances), installment splits, and the meal plans' sums. `scripts/alias.mjs` teaches node the `@/` import alias, so a pure module can
 import another the same way the app does. There is no browser test suite; UI and schema changes are verified by running the app
 against a throwaway Postgres and driving it, because the bugs that mattered here were only

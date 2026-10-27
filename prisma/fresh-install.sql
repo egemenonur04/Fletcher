@@ -12,19 +12,7 @@
 CREATE SCHEMA IF NOT EXISTS "public";
 
 -- CreateEnum
-CREATE TYPE "BookStatus" AS ENUM ('READ', 'READING', 'WANT_TO_READ');
-
--- CreateEnum
-CREATE TYPE "AnimeStatus" AS ENUM ('WATCHING', 'COMPLETED', 'PLAN_TO_WATCH');
-
--- CreateEnum
-CREATE TYPE "AnimeSeason" AS ENUM ('WINTER', 'SPRING', 'SUMMER', 'FALL');
-
--- CreateEnum
 CREATE TYPE "MovieStatus" AS ENUM ('WATCHED', 'WANT_TO_WATCH', 'DROPPED');
-
--- CreateEnum
-CREATE TYPE "TvStatus" AS ENUM ('WATCHING', 'COMPLETED', 'PLAN_TO_WATCH');
 
 -- CreateEnum
 CREATE TYPE "GameStatus" AS ENUM ('PLAYING', 'COMPLETED', 'PLAN_TO_PLAY', 'DROPPED', 'PLATINUM');
@@ -40,27 +28,6 @@ CREATE TYPE "MangaStatus" AS ENUM ('READING', 'COMPLETED', 'PLAN_TO_READ');
 
 -- CreateEnum
 CREATE TYPE "ArticleStatus" AS ENUM ('READ', 'WANT_TO_READ');
-
--- CreateEnum
-CREATE TYPE "GarmentType" AS ENUM ('TOPS', 'BOTTOMS', 'OUTERWEAR', 'UNDERWEAR', 'SOCKS', 'ACTIVEWEAR', 'FORMALWEAR', 'ACCESSORIES', 'OTHER');
-
--- CreateEnum
-CREATE TYPE "ColorGroup" AS ENUM ('WHITE', 'LIGHT', 'DARK', 'VIVID', 'MIXED');
-
--- CreateEnum
-CREATE TYPE "WashMethod" AS ENUM ('MACHINE', 'HAND', 'DRY_CLEAN', 'DO_NOT_WASH');
-
--- CreateEnum
-CREATE TYPE "WashTemp" AS ENUM ('COLD', 'W30', 'W40', 'W60', 'W90');
-
--- CreateEnum
-CREATE TYPE "WashCycle" AS ENUM ('NORMAL', 'GENTLE');
-
--- CreateEnum
-CREATE TYPE "SpinLevel" AS ENUM ('NORMAL', 'REDUCED', 'NONE');
-
--- CreateEnum
-CREATE TYPE "DryMethod" AS ENUM ('TUMBLE_HIGH', 'TUMBLE_MEDIUM', 'TUMBLE_LOW', 'AIR_LINE', 'AIR_FLAT', 'AIR_DRIP', 'DRY_CLEAN', 'DO_NOT_DRY');
 
 -- CreateEnum
 CREATE TYPE "ExpenseCategory" AS ENUM ('FOOD', 'BOOKS', 'EDUCATION', 'ENTERTAINMENT', 'CLOTHING', 'SUBSCRIPTIONS', 'SELF_CARE', 'TRANSPORTATION', 'OTHER', 'CASH');
@@ -88,79 +55,6 @@ CREATE TYPE "VocabVerdict" AS ENUM ('DONE', 'AMBIGUOUS', 'TO_REVIEW');
 
 -- CreateEnum
 CREATE TYPE "VocabCardState" AS ENUM ('NEW', 'LEARNING', 'REVIEW', 'RELEARNING');
-
--- CreateTable
-CREATE TABLE "Book" (
-    "id" TEXT NOT NULL,
-    "title" TEXT NOT NULL,
-    "author" TEXT NOT NULL,
-    "status" "BookStatus" NOT NULL DEFAULT 'WANT_TO_READ',
-    "owned" BOOLEAN NOT NULL DEFAULT false,
-    "ownedKindle" BOOLEAN NOT NULL DEFAULT false,
-    "language" "Language" NOT NULL DEFAULT 'ENGLISH',
-    "publisher" TEXT,
-    "pages" INTEGER NOT NULL,
-    "pagesRead" INTEGER NOT NULL DEFAULT 0,
-    "coverImage" TEXT,
-    "rating" DOUBLE PRECISION,
-    "notes" TEXT,
-    "timesReread" INTEGER NOT NULL DEFAULT 0,
-    "openLibraryId" TEXT,
-    "googleBooksId" TEXT,
-    "seriesId" TEXT,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "Book_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "BookSeries" (
-    "id" TEXT NOT NULL,
-    "name" TEXT NOT NULL,
-    "universeId" TEXT,
-    "notes" TEXT,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "BookSeries_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "BookUniverse" (
-    "id" TEXT NOT NULL,
-    "name" TEXT NOT NULL,
-    "notes" TEXT,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "BookUniverse_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "Anime" (
-    "id" TEXT NOT NULL,
-    "title" TEXT NOT NULL,
-    "studio" TEXT,
-    "status" "AnimeStatus" NOT NULL DEFAULT 'PLAN_TO_WATCH',
-    "episodes" INTEGER,
-    "episodesWatched" INTEGER NOT NULL DEFAULT 0,
-    "episodeDuration" INTEGER NOT NULL DEFAULT 24,
-    "season" "AnimeSeason",
-    "year" INTEGER,
-    "language" "Language" NOT NULL DEFAULT 'JAPANESE',
-    "coverImage" TEXT,
-    "rating" DOUBLE PRECISION,
-    "notes" TEXT,
-    "timesRewatched" INTEGER NOT NULL DEFAULT 0,
-    "seasonNumber" INTEGER,
-    "malId" INTEGER,
-    "seriesId" TEXT,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "Anime_pkey" PRIMARY KEY ("id")
-);
 
 -- CreateTable
 CREATE TABLE "Movie" (
@@ -194,30 +88,6 @@ CREATE TABLE "MovieUniverse" (
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "MovieUniverse_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "TvShow" (
-    "id" TEXT NOT NULL,
-    "title" TEXT NOT NULL,
-    "creator" TEXT,
-    "network" TEXT,
-    "status" "TvStatus" NOT NULL DEFAULT 'PLAN_TO_WATCH',
-    "totalEpisodes" INTEGER,
-    "episodesWatched" INTEGER NOT NULL DEFAULT 0,
-    "episodeRuntime" INTEGER NOT NULL DEFAULT 45,
-    "year" INTEGER,
-    "language" "Language" NOT NULL DEFAULT 'ENGLISH',
-    "coverImage" TEXT,
-    "rating" DOUBLE PRECISION,
-    "notes" TEXT,
-    "timesRewatched" INTEGER NOT NULL DEFAULT 0,
-    "seasonNumber" INTEGER,
-    "seriesId" TEXT,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "TvShow_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -344,30 +214,6 @@ CREATE TABLE "Article" (
 );
 
 -- CreateTable
-CREATE TABLE "Garment" (
-    "id" TEXT NOT NULL,
-    "name" TEXT NOT NULL,
-    "type" "GarmentType" NOT NULL DEFAULT 'OTHER',
-    "brand" TEXT,
-    "color" TEXT,
-    "colorGroup" "ColorGroup" NOT NULL DEFAULT 'MIXED',
-    "materials" TEXT NOT NULL,
-    "washMethod" "WashMethod" NOT NULL DEFAULT 'MACHINE',
-    "maxTemp" "WashTemp" NOT NULL DEFAULT 'W40',
-    "washCycle" "WashCycle" NOT NULL DEFAULT 'NORMAL',
-    "spinLevel" "SpinLevel" NOT NULL DEFAULT 'NORMAL',
-    "dryMethod" "DryMethod" NOT NULL DEFAULT 'TUMBLE_LOW',
-    "wornCount" INTEGER NOT NULL DEFAULT 0,
-    "lastWashed" TIMESTAMP(3),
-    "image" TEXT,
-    "notes" TEXT,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "Garment_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
 CREATE TABLE "MealCheck" (
     "date" DATE NOT NULL,
     "meal" TEXT NOT NULL,
@@ -475,54 +321,6 @@ CREATE TABLE "ShopProduct" (
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "ShopProduct_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "AnimeSeries" (
-    "id" TEXT NOT NULL,
-    "name" TEXT NOT NULL,
-    "universeId" TEXT,
-    "notes" TEXT,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "AnimeSeries_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "AnimeUniverse" (
-    "id" TEXT NOT NULL,
-    "name" TEXT NOT NULL,
-    "notes" TEXT,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "AnimeUniverse_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "TvSeries" (
-    "id" TEXT NOT NULL,
-    "name" TEXT NOT NULL,
-    "tmdbId" INTEGER,
-    "imdbId" TEXT,
-    "universeId" TEXT,
-    "notes" TEXT,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "TvSeries_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "TvUniverse" (
-    "id" TEXT NOT NULL,
-    "name" TEXT NOT NULL,
-    "notes" TEXT,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "TvUniverse_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -757,51 +555,6 @@ CREATE TABLE "GpaLesson" (
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Book_openLibraryId_key" ON "Book"("openLibraryId");
-
--- CreateIndex
-CREATE UNIQUE INDEX "Book_googleBooksId_key" ON "Book"("googleBooksId");
-
--- CreateIndex
-CREATE INDEX "Book_seriesId_idx" ON "Book"("seriesId");
-
--- CreateIndex
-CREATE INDEX "Book_status_createdAt_idx" ON "Book"("status", "createdAt" DESC);
-
--- CreateIndex
-CREATE INDEX "Book_createdAt_idx" ON "Book"("createdAt" DESC);
-
--- CreateIndex
-CREATE INDEX "Book_language_createdAt_idx" ON "Book"("language", "createdAt" DESC);
-
--- CreateIndex
-CREATE INDEX "BookSeries_universeId_idx" ON "BookSeries"("universeId");
-
--- CreateIndex
-CREATE UNIQUE INDEX "BookSeries_universeId_name_key" ON "BookSeries"("universeId", "name");
-
--- CreateIndex
-CREATE UNIQUE INDEX "BookUniverse_name_key" ON "BookUniverse"("name");
-
--- CreateIndex
-CREATE UNIQUE INDEX "Anime_malId_key" ON "Anime"("malId");
-
--- CreateIndex
-CREATE INDEX "Anime_status_createdAt_idx" ON "Anime"("status", "createdAt" DESC);
-
--- CreateIndex
-CREATE INDEX "Anime_createdAt_idx" ON "Anime"("createdAt" DESC);
-
--- CreateIndex
-CREATE INDEX "Anime_language_createdAt_idx" ON "Anime"("language", "createdAt" DESC);
-
--- CreateIndex
-CREATE INDEX "Anime_seriesId_idx" ON "Anime"("seriesId");
-
--- CreateIndex
-CREATE INDEX "Anime_seriesId_seasonNumber_idx" ON "Anime"("seriesId", "seasonNumber");
-
--- CreateIndex
 CREATE UNIQUE INDEX "Movie_tmdbId_key" ON "Movie"("tmdbId");
 
 -- CreateIndex
@@ -815,18 +568,6 @@ CREATE INDEX "Movie_createdAt_idx" ON "Movie"("createdAt" DESC);
 
 -- CreateIndex
 CREATE UNIQUE INDEX "MovieUniverse_name_key" ON "MovieUniverse"("name");
-
--- CreateIndex
-CREATE INDEX "TvShow_status_createdAt_idx" ON "TvShow"("status", "createdAt" DESC);
-
--- CreateIndex
-CREATE INDEX "TvShow_createdAt_idx" ON "TvShow"("createdAt" DESC);
-
--- CreateIndex
-CREATE INDEX "TvShow_seriesId_idx" ON "TvShow"("seriesId");
-
--- CreateIndex
-CREATE INDEX "TvShow_seriesId_seasonNumber_idx" ON "TvShow"("seriesId", "seasonNumber");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Game_steamAppId_key" ON "Game"("steamAppId");
@@ -877,12 +618,6 @@ CREATE INDEX "Article_createdAt_idx" ON "Article"("createdAt" DESC);
 CREATE INDEX "Article_language_createdAt_idx" ON "Article"("language", "createdAt" DESC);
 
 -- CreateIndex
-CREATE INDEX "Garment_type_wornCount_idx" ON "Garment"("type", "wornCount" DESC);
-
--- CreateIndex
-CREATE INDEX "Garment_createdAt_idx" ON "Garment"("createdAt" DESC);
-
--- CreateIndex
 CREATE INDEX "WaterIntake_date_idx" ON "WaterIntake"("date");
 
 -- CreateIndex
@@ -899,27 +634,6 @@ CREATE INDEX "Shop_category_idx" ON "Shop"("category");
 
 -- CreateIndex
 CREATE INDEX "ShopProduct_shopId_idx" ON "ShopProduct"("shopId");
-
--- CreateIndex
-CREATE INDEX "AnimeSeries_universeId_idx" ON "AnimeSeries"("universeId");
-
--- CreateIndex
-CREATE UNIQUE INDEX "AnimeSeries_universeId_name_key" ON "AnimeSeries"("universeId", "name");
-
--- CreateIndex
-CREATE UNIQUE INDEX "AnimeUniverse_name_key" ON "AnimeUniverse"("name");
-
--- CreateIndex
-CREATE UNIQUE INDEX "TvSeries_tmdbId_key" ON "TvSeries"("tmdbId");
-
--- CreateIndex
-CREATE INDEX "TvSeries_universeId_idx" ON "TvSeries"("universeId");
-
--- CreateIndex
-CREATE UNIQUE INDEX "TvSeries_universeId_name_key" ON "TvSeries"("universeId", "name");
-
--- CreateIndex
-CREATE UNIQUE INDEX "TvUniverse_name_key" ON "TvUniverse"("name");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Module_title_key" ON "Module"("title");
@@ -1015,19 +729,7 @@ CREATE INDEX "VocabReview_cardId_idx" ON "VocabReview"("cardId");
 CREATE INDEX "GpaLesson_position_idx" ON "GpaLesson"("position");
 
 -- AddForeignKey
-ALTER TABLE "Book" ADD CONSTRAINT "Book_seriesId_fkey" FOREIGN KEY ("seriesId") REFERENCES "BookSeries"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "BookSeries" ADD CONSTRAINT "BookSeries_universeId_fkey" FOREIGN KEY ("universeId") REFERENCES "BookUniverse"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "Anime" ADD CONSTRAINT "Anime_seriesId_fkey" FOREIGN KEY ("seriesId") REFERENCES "AnimeSeries"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
 ALTER TABLE "Movie" ADD CONSTRAINT "Movie_universeId_fkey" FOREIGN KEY ("universeId") REFERENCES "MovieUniverse"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "TvShow" ADD CONSTRAINT "TvShow_seriesId_fkey" FOREIGN KEY ("seriesId") REFERENCES "TvSeries"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "ComicUniverse" ADD CONSTRAINT "ComicUniverse_publisherId_fkey" FOREIGN KEY ("publisherId") REFERENCES "ComicPublisher"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -1040,12 +742,6 @@ ALTER TABLE "ComicIssue" ADD CONSTRAINT "ComicIssue_titleId_fkey" FOREIGN KEY ("
 
 -- AddForeignKey
 ALTER TABLE "ShopProduct" ADD CONSTRAINT "ShopProduct_shopId_fkey" FOREIGN KEY ("shopId") REFERENCES "Shop"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "AnimeSeries" ADD CONSTRAINT "AnimeSeries_universeId_fkey" FOREIGN KEY ("universeId") REFERENCES "AnimeUniverse"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "TvSeries" ADD CONSTRAINT "TvSeries_universeId_fkey" FOREIGN KEY ("universeId") REFERENCES "TvUniverse"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "XpAward" ADD CONSTRAINT "XpAward_studySessionId_fkey" FOREIGN KEY ("studySessionId") REFERENCES "StudySession"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -1082,13 +778,8 @@ ALTER TABLE "VocabReview" ADD CONSTRAINT "VocabReview_cardId_fkey" FOREIGN KEY (
 
 
 -- Row level security
-ALTER TABLE "Book" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "BookSeries" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "BookUniverse" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "Anime" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "Movie" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "MovieUniverse" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "TvShow" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "Game" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "Manga" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "ComicPublisher" ENABLE ROW LEVEL SECURITY;
@@ -1096,7 +787,6 @@ ALTER TABLE "ComicUniverse" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "ComicTitle" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "ComicIssue" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "Article" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "Garment" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "MealCheck" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "WaterIntake" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "FinanceConfig" ENABLE ROW LEVEL SECURITY;
@@ -1106,10 +796,6 @@ ALTER TABLE "Subscription" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "Installment" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "Shop" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "ShopProduct" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "AnimeSeries" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "AnimeUniverse" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "TvSeries" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "TvUniverse" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "Module" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "XpAward" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "StudyConfig" ENABLE ROW LEVEL SECURITY;

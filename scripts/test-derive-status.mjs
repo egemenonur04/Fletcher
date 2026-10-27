@@ -2,10 +2,7 @@
 // this is the thing that decides what every item in the library is labelled.
 //
 // Run: node --experimental-strip-types scripts/test-derive-status.mjs
-import {
-  deriveStatus, bookProgress, animeProgress, tvProgress, mangaProgress,
-  BOOK_STATUS, WATCH_STATUS, READ_STATUS,
-} from "../lib/derive-status.ts";
+import { deriveStatus, mangaProgress, READ_STATUS } from "../lib/derive-status.ts";
 
 let pass = 0;
 const failures = [];
@@ -14,10 +11,8 @@ function eq(actual, expected, label) {
   else failures.push(`${label}\n    expected ${expected}, got ${actual}`);
 }
 
-// ── the core table, across every vocabulary ──────────────────────────────────
-const vocabs = [
-  ["book", BOOK_STATUS], ["watch", WATCH_STATUS], ["read", READ_STATUS],
-];
+// ── the core table ───────────────────────────────────────────────────────────
+const vocabs = [["read", READ_STATUS]];
 const totals = [null, undefined, 0, 1, 24];
 const progresses = [0, 1, 12, 23, 24, 25, -3];
 
@@ -34,23 +29,15 @@ for (const [name, v] of vocabs) {
 }
 
 // ── the rules that actually matter, spelled out ──────────────────────────────
-eq(deriveStatus({ progress: 24, total: 24 }, WATCH_STATUS), "COMPLETED", "all watched → completed");
-eq(deriveStatus({ progress: 5, total: 24 }, WATCH_STATUS), "WATCHING", "some watched → watching");
-eq(deriveStatus({ progress: 0, total: 24 }, WATCH_STATUS), "PLAN_TO_WATCH", "none watched → plan");
-eq(deriveStatus({ progress: 30, total: 24 }, WATCH_STATUS), "COMPLETED", "over-watched → completed");
+eq(deriveStatus({ progress: 24, total: 24 }, READ_STATUS), "COMPLETED", "all read → completed");
+eq(deriveStatus({ progress: 5, total: 24 }, READ_STATUS), "READING", "some read → reading");
+eq(deriveStatus({ progress: 0, total: 24 }, READ_STATUS), "PLAN_TO_READ", "none read → plan");
+eq(deriveStatus({ progress: 30, total: 24 }, READ_STATUS), "COMPLETED", "over-read → completed");
 eq(deriveStatus({ progress: 500, total: null }, READ_STATUS), "READING", "unknown total never completes");
 eq(deriveStatus({ progress: 0, total: null }, READ_STATUS), "PLAN_TO_READ", "unknown total, nothing read");
-eq(deriveStatus({ progress: -5, total: 24 }, WATCH_STATUS), "PLAN_TO_WATCH", "negative treated as zero");
-eq(deriveStatus({ progress: 0, total: 0 }, BOOK_STATUS), "WANT_TO_READ", "zero total, nothing read");
-eq(deriveStatus({ progress: 3, total: 0 }, BOOK_STATUS), "READING", "zero total but progress → reading");
-
-// ── per-entity field selection ───────────────────────────────────────────────
-eq(deriveStatus(bookProgress({ pagesRead: 320, pages: 320 }), BOOK_STATUS), "READ", "book finished");
-eq(deriveStatus(bookProgress({ pagesRead: 0, pages: 320 }), BOOK_STATUS), "WANT_TO_READ", "book unstarted");
-eq(deriveStatus(bookProgress({ pages: 320 }), BOOK_STATUS), "WANT_TO_READ", "book missing pagesRead");
-eq(deriveStatus(animeProgress({ episodesWatched: 12, episodes: 12 }), WATCH_STATUS), "COMPLETED", "anime finished");
-eq(deriveStatus(animeProgress({ episodesWatched: 3, episodes: null }), WATCH_STATUS), "WATCHING", "anime unknown total");
-eq(deriveStatus(tvProgress({ episodesWatched: 24, totalEpisodes: 24 }), WATCH_STATUS), "COMPLETED", "tv finished");
+eq(deriveStatus({ progress: -5, total: 24 }, READ_STATUS), "PLAN_TO_READ", "negative treated as zero");
+eq(deriveStatus({ progress: 0, total: 0 }, READ_STATUS), "PLAN_TO_READ", "zero total, nothing read");
+eq(deriveStatus({ progress: 3, total: 0 }, READ_STATUS), "READING", "zero total but progress → reading");
 
 // ── manga precedence: chapters lead, volumes fall back, ongoing wins ─────────
 eq(deriveStatus(mangaProgress({ chaptersRead: 120, totalChapters: 120, volumesRead: 1, totalVolumes: 12 }), READ_STATUS),

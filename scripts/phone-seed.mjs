@@ -13,55 +13,14 @@ const year = now.getUTCFullYear();
 const month = now.getUTCMonth() + 1;
 
 async function main() {
-  if (await db.book.count()) {
+  if (await db.movie.count()) {
     console.log("already seeded");
     return;
   }
 
-  await db.bookUniverse.create({ data: { id: "bu1", name: "A very long universe name that should wrap on a narrow phone" } });
-  await db.bookSeries.create({ data: { id: "bs1", name: "A series whose name also wraps", universeId: "bu1" } });
-  await db.book.create({
-    data: {
-      id: "b1",
-      title: "The Longest Book Title In The Library For Overflow Testing",
-      author: "Someone With A Extremely Long Name-Hyphenated",
-      pages: 412,
-      pagesRead: 40,
-      seriesId: "bs1",
-    },
-  });
-
-  await db.animeUniverse.create({ data: { id: "au1", name: "Attack on Titan world" } });
-  await db.animeSeries.create({ data: { id: "as1", name: "Attack on Titan", universeId: "au1" } });
-  await db.anime.create({
-    data: {
-      id: "a1",
-      title: "Attack on Titan | Season 1",
-      episodes: 25,
-      episodesWatched: 12,
-      seasonNumber: 1,
-      seriesId: "as1",
-      year: 2013,
-    },
-  });
-
   await db.movieUniverse.create({ data: { id: "mu1", name: "MCU" } });
   await db.movie.create({
     data: { id: "m1", title: "Iron Man", runtime: 126, year: 2008, universeId: "mu1" },
-  });
-
-  await db.tvUniverse.create({ data: { id: "tu1", name: "The Office franchise" } });
-  await db.tvSeries.create({ data: { id: "ts1", name: "The Office", universeId: "tu1" } });
-  await db.tvShow.create({
-    data: {
-      id: "t1",
-      title: "The Office | Season 1",
-      totalEpisodes: 6,
-      episodesWatched: 3,
-      seasonNumber: 1,
-      seriesId: "ts1",
-      year: 2005,
-    },
   });
 
   await db.game.create({ data: { id: "g1", title: "Hades", hoursPlayed: 40 } });
@@ -76,10 +35,6 @@ async function main() {
 
   await db.article.create({
     data: { id: "ar1", title: "A longform article with a wrapping headline", wordCount: 4000 },
-  });
-
-  await db.garment.create({
-    data: { id: "w1", name: "Navy merino jumper", materials: "100% merino wool", wornCount: 4 },
   });
 
   await db.shop.create({

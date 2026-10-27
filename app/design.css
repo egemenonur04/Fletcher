@@ -55,7 +55,7 @@ h2.text-2xl {
 
 /* Buttons are pills: the main action in ink, the rest a hairline outline. A button that fills its
  * row or holds two lines (a choice in a toggle group) keeps its softer rectangle. */
-:is(button, a):is(.bg-gray-900, .bg-emerald-600, .bg-green-600, .bg-red-600, .border):not(.w-full, .flex-1, .text-left, .theme-tile, .theme-nav-item) {
+:is(:is(button, a):is(.bg-gray-900, .bg-emerald-600, .bg-green-600, .bg-red-600), button.border):not(.w-full, .flex-1, .text-left, .rounded-xl, .rounded-2xl, .theme-tile, .theme-nav-item) {
   border-radius: 999px;
 }
 /* The sections' coloured actions are ink, like every other main action. */

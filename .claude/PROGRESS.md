@@ -267,8 +267,13 @@ Anime, TV (code + tables). Order: design first, then SAT, then Health.
       redesigned; `docs/design/paper.md`; AGENTS.md/CODEBASE.md updated. Checked: typecheck, lint,
       tests, build, screenshots at 1280 and 390 against a local Postgres. remarkable.com itself is
       blocked from this sandbox — the look follows its known style, not a fetched copy.
-- [ ] **2. Delete** Wardrobe, Books, Anime, TV (pages, API, components, lib, Prisma models,
-      a drop migration, fresh-install regenerated, nav/portal links).
+- [x] **2. Delete** (2026-10-27) Wardrobe, Books, Anime, TV: pages, API, components, libs
+      (Open Library/Google Books, anime MAL import, TMDB TV, wash calculator), their tests, the
+      `/wardrobe` redirect, schema models. Kept what manga/movies share (MAL client + image CDN,
+      TMDB films, `Toggle` moved to TmdbParts, `searchQuery` to mal-manga-list). Migration
+      `041-drop-books-anime-tv-wardrobe.sql` (destructive, after deploy; tested twice locally,
+      diff empty); `fresh-install.sql` regenerated (35 tables). Checks: typecheck, lint, tests,
+      build, screenshots.
 - [ ] **3. SAT category** — top-level section holding Vocabulary (moved from Study) and a
       Question Bank: browse/filter College Board questions, then solve them in a Bluebook-style
       exam screen (timer, mark for review, question navigator, eliminator, calculator, reference).

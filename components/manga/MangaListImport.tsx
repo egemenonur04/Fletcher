@@ -4,14 +4,12 @@ import { useRef, useState } from "react";
 import Link from "next/link";
 import { Check, Download, FileUp, Loader2, Square, User } from "lucide-react";
 import { inputCls } from "@/components/ui/form";
-import { MalNotice } from "@/components/tmdb/TmdbParts";
-import { Toggle, tinyButtonCls, tinyButtonsCls } from "@/components/anime/MalImport";
+import { MalNotice, Toggle, tinyButtonCls, tinyButtonsCls } from "@/components/tmdb/TmdbParts";
 import { LANGUAGE_OPTIONS, type LanguageKey } from "@/lib/constants/languages";
 import { getJson } from "@/lib/fetch-retry";
-import { searchQuery } from "@/lib/mal-list";
 import type { MalManga } from "@/lib/mal-manga";
 import {
-  MANGA_LEFT_OUT_LABELS, isAnimeExport, mangaLeftOut, pickManga, rowsFromMangaExport, rowsFromMangaSheet,
+  MANGA_LEFT_OUT_LABELS, isAnimeExport, mangaLeftOut, pickManga, rowsFromMangaExport, rowsFromMangaSheet, searchQuery,
   type MangaLeftOut, type MangaListRow,
 } from "@/lib/mal-manga-list";
 import { readFirstSheetWithLinks } from "@/lib/xlsx-lite";

@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  BookOpen, Film, Tv2, Gamepad2, BookMarked, Layers, Newspaper,
+  Film, Gamepad2, BookMarked, Newspaper,
   ArrowRight, Clock, LayoutGrid, PieChart,
 } from "lucide-react";
 import { formatReadingTime } from "@/lib/reading-time";
@@ -19,18 +19,13 @@ export interface SectionData {
 
 const META: Record<string, {
   icon: React.ComponentType<{ className?: string }>;
-  color: string;
-  iconColor: string;
   chartColor: string;
 }> = {
-  books:    { icon: BookOpen,   color: "from-blue-50 to-indigo-50 border-blue-200",     iconColor: "text-blue-600",   chartColor: "var(--color-blue-500)" },
-  anime:    { icon: Layers,     color: "from-pink-50 to-rose-50 border-pink-200",       iconColor: "text-pink-500",   chartColor: "var(--color-pink-500)" },
-  movies:   { icon: Film,       color: "from-purple-50 to-violet-50 border-purple-200", iconColor: "text-purple-500", chartColor: "var(--color-purple-500)" },
-  tv:       { icon: Tv2,        color: "from-orange-50 to-amber-50 border-orange-200",  iconColor: "text-orange-500", chartColor: "var(--color-orange-500)" },
-  games:    { icon: Gamepad2,   color: "from-green-50 to-emerald-50 border-green-200",  iconColor: "text-green-500",  chartColor: "var(--color-green-500)" },
-  manga:    { icon: BookMarked, color: "from-cyan-50 to-sky-50 border-cyan-200",        iconColor: "text-cyan-500",   chartColor: "var(--color-cyan-500)" },
-  comics:   { icon: BookMarked, color: "from-yellow-50 to-lime-50 border-yellow-200",   iconColor: "text-yellow-600", chartColor: "var(--color-yellow-500)" },
-  articles: { icon: Newspaper,  color: "from-gray-50 to-slate-50 border-gray-200",     iconColor: "text-gray-500",   chartColor: "var(--color-gray-500)" },
+  movies:   { icon: Film,       chartColor: "var(--color-gray-900)" },
+  games:    { icon: Gamepad2,   chartColor: "var(--color-gray-700)" },
+  manga:    { icon: BookMarked, chartColor: "var(--color-gray-500)" },
+  comics:   { icon: BookMarked, chartColor: "var(--color-gray-400)" },
+  articles: { icon: Newspaper,  chartColor: "var(--color-gray-300)" },
 };
 
 function polarToCartesian(cx: number, cy: number, r: number, deg: number) {
@@ -123,10 +118,10 @@ function GridView({ sections }: { sections: SectionData[] }) {
           <Link
             key={section.href}
             href={section.href}
-            className={`group relative bg-gradient-to-br ${meta.color} border rounded-xl p-5 hover:shadow-md transition-all`}
+            className="theme-tile group relative border border-gray-200 rounded-xl p-5 transition-colors"
           >
             <div className="flex items-center justify-between mb-3">
-              <Icon className={`w-5 h-5 ${meta.iconColor}`} />
+              <Icon className="w-5 h-5 text-gray-900" />
               <ArrowRight className="w-4 h-4 text-gray-400 group-hover:translate-x-0.5 transition-transform" />
             </div>
             <p className="font-semibold text-gray-800 mb-3">{section.label}</p>

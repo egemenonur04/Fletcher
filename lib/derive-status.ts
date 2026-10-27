@@ -1,5 +1,5 @@
-// Status is computed from progress counts, never entered by hand — a show sitting at 24/24
-// episodes should not be able to stay marked "Watching".
+// Status is computed from progress counts, never entered by hand — a series sitting at 120/120
+// chapters should not be able to stay marked "Reading".
 //
 // Pure and dependency-free so both the API routes and the forms can use it, and so it can be
 // tested without a database or a browser.
@@ -16,18 +16,6 @@ export interface Progress {
   /** null/undefined means unknown or still releasing — which can never be "completed". */
   total?: number | null;
 }
-
-export const BOOK_STATUS = {
-  planned: "WANT_TO_READ",
-  inProgress: "READING",
-  completed: "READ",
-} as const;
-
-export const WATCH_STATUS = {
-  planned: "PLAN_TO_WATCH",
-  inProgress: "WATCHING",
-  completed: "COMPLETED",
-} as const;
 
 export const READ_STATUS = {
   planned: "PLAN_TO_READ",
@@ -52,24 +40,6 @@ export function deriveStatus<T extends string>(
 }
 
 // ─── Per-entity progress selection ───────────────────────────────────────────
-
-export function bookProgress(b: { pagesRead?: number | null; pages?: number | null }): Progress {
-  return { progress: b.pagesRead ?? 0, total: b.pages };
-}
-
-export function animeProgress(a: {
-  episodesWatched?: number | null;
-  episodes?: number | null;
-}): Progress {
-  return { progress: a.episodesWatched ?? 0, total: a.episodes };
-}
-
-export function tvProgress(t: {
-  episodesWatched?: number | null;
-  totalEpisodes?: number | null;
-}): Progress {
-  return { progress: t.episodesWatched ?? 0, total: t.totalEpisodes };
-}
 
 /**
  * Manga tracks volumes and chapters independently. Chapters lead — they are what the cards and

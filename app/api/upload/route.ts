@@ -16,7 +16,7 @@ const MAX_BYTES = 5 * 1024 * 1024;
 // Storage folders the app is allowed to write to. The client picks one by name; it never
 // supplies a path, because a client-controlled path can escape the bucket via "..".
 const ALLOWED_FOLDERS = new Set([
-  "books", "anime", "movies", "tv", "games", "manga", "articles", "wardrobe", "uploads",
+  "movies", "games", "manga", "articles", "uploads",
   "comic-issues",
 ]);
 

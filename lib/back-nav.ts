@@ -125,7 +125,7 @@ export function decideBack(trail: Trail, current: string, now: Date = new Date()
   if (!here || pathnameOf(here) === "/login") return { type: "none" };
 
   // The browser's previous entry is the trail's previous entry only while `depth` says so.
-  // A redirecting entry (`/finances`, an old `/wardrobe` path) is skipped: stepping onto it
+  // A redirecting entry (`/finances`) is skipped: stepping onto it
   // sends the user straight back here.
   if (trail.depth >= 1 && trail.index >= 1) {
     const prev = trail.entries[trail.index - 1];
@@ -144,8 +144,8 @@ export function decideBack(trail: Trail, current: string, now: Date = new Date()
 /**
  * The parent the page's own back arrow links to, derived from the path (those arrows are
  * spread across the pages and are not changed here). Section roots go to the portal, which
- * is what "Back to Portal" does. A `new` page opened from a series or universe keeps that
- * parent, matching the link on that page.
+ * is what "Back to Portal" does. A `new` page opened from a universe keeps that parent,
+ * matching the link on that page.
  */
 export function parentFallback(href: string, now: Date = new Date()): string | null {
   const here = normalizePath(href);
@@ -158,23 +158,16 @@ export function parentFallback(href: string, now: Date = new Date()): string | n
   if (path === "/finances" || /^\/finances\/\d+\/\d+$/.test(path)) return "/";
   if (path === "/finances/log") return financesMonth(now);
 
-  if (path === "/library/anime/import") return "/library/anime/new";
-
-  const search = new URLSearchParams(searchOf(here));
-  const seriesId = idSegment(search.get("seriesId"));
-  if (seriesId && /^\/library\/(books|anime|tv)\/new$/.test(path)) {
-    return `/library/${path.split("/")[2]}/s/${seriesId}`;
-  }
-  const universeId = idSegment(search.get("universeId"));
+  const universeId = idSegment(new URLSearchParams(searchOf(here)).get("universeId"));
   if (universeId && path === "/library/movies/new") return `/library/movies/u/${universeId}`;
 
   const parts = path.split("/").filter(Boolean);
-  // Books, anime, TV and movies use `s` and `u` as route markers, not pages. Comics uses
-  // real ids in those positions, so a universe whose id is "u" must stay.
-  const hierarchical = parts[0] === "library" && ["books", "anime", "tv", "movies"].includes(parts[1] ?? "");
-  if (hierarchical && parts.at(-1) === "new" && (parts.at(-2) === "s" || parts.at(-2) === "u")) parts.splice(-2, 2);
+  // Movies use `u` as a route marker, not a page. Comics uses real ids in that position, so a
+  // universe whose id is "u" must stay.
+  const hierarchical = parts[0] === "library" && parts[1] === "movies";
+  if (hierarchical && parts.at(-1) === "new" && parts.at(-2) === "u") parts.splice(-2, 2);
   else parts.pop();
-  if (hierarchical) while (parts.at(-1) === "s" || parts.at(-1) === "u") parts.pop();
+  if (hierarchical) while (parts.at(-1) === "u") parts.pop();
   if (parts.length === 0) return "/";
   const parent = "/" + parts.join("/");
   return parent === path ? null : parent;
@@ -269,7 +262,6 @@ function usableDestination(href: string, here: string): boolean {
   if (sameDestination(href, here)) return false;
   const path = pathnameOf(href);
   if (path === "/login" || path === "/finances") return false;
-  if (path === "/wardrobe" || path.startsWith("/wardrobe/")) return false;
   return true;
 }
 

@@ -4,8 +4,8 @@ A personal hub, deployed on Vercel and backed by Supabase Postgres. Five section
 
 | Section | What it is |
 |---|---|
-| **Library** | Books, anime, manga, comics, films, TV, games and articles. Series and universe hierarchies, progress tracking, derived status, Steam sync. |
-| **Self Care** | Today's meals from the monthly diet plan, ticked off as you eat them, with a water log toward the day's goal — installable on the home screen as "Diet", and usable offline; and the wardrobe: garments with care labels, turned into real machine settings and a wash-urgency ranking. |
+| **Library** | Manga, comics, films, games and articles. Universe hierarchies, progress tracking, derived status, Steam sync. |
+| **Self Care** | Today's meals from the monthly diet plan, ticked off as you eat them, with a water log toward the day's goal — installable on the home screen as "Diet", and usable offline. |
 | **Finances** | Monthly budget, expenses, additional income and carryover, in TRY. Includes an installable mobile expense logger that works offline. |
 | **Study** | Timed study sessions against named modules, levelling fourteen stats. Plus study-time totals, an AP unit tracker and a SAT vocabulary test. |
 
@@ -26,13 +26,9 @@ AUTH_PASSWORD=…                 # the password you log in with
 REPORT_TOKEN=…                  # optional: 32+ random chars; lets the nightly review read /api/study/review
 WIDGET_TOKEN=…                  # optional: 32+ random chars; the phone widgets in scriptable/ (see its README)
 COMICVINE_API_KEY=…             # optional: comicvine.gamespot.com/api — lets Add Comic import a whole run
-TMDB_API_KEY=…                  # optional: themoviedb.org API key or read token — film and TV imports
-MAL_CLIENT_ID=…                 # optional: myanimelist.net/apiconfig Client ID — anime and manga imports
-GOOGLE_BOOKS_API_KEY=…          # Google Cloud Books API key — Add Book search (enable the Books API)
+TMDB_API_KEY=…                  # optional: themoviedb.org API key or read token — film imports
+MAL_CLIENT_ID=…                 # optional: myanimelist.net/apiconfig Client ID — manga imports
 ```
-
-Book import searches Google Books. Without a key Google's anonymous quota often 403/429s, and
-search has nothing else to fall back on.
 
 Optional, per feature: `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` (cover uploads),
 `STEAM_API_KEY` / `STEAM_USER_ID` / `STEAMGRIDDB_API_KEY` (Steam sync),

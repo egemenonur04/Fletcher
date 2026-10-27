@@ -51,40 +51,6 @@ function makeReadingTime(minutes: number): ReadingTime {
   };
 }
 
-// ─── BOOKS ───────────────────────────────────────────────────────────────────
-
-/**
- * Estimated reading time for a book.
- * Uses average words-per-page × pages / WPM for the given language.
- */
-export function calculateReadingTime(
-  pages: number,
-  language: LanguageKey
-): ReadingTime {
-  const config = LANGUAGE_CONFIG[language];
-  const totalUnits = pages * config.unitsPerPage;
-  const minutes = Math.round(totalUnits / config.wpm);
-  return makeReadingTime(minutes);
-}
-
-/**
- * Sum reading time across multiple books.
- */
-export function sumReadingTime(
-  books: Array<{ pages: number; language: string }>
-): ReadingTime {
-  const totalMinutes = books.reduce((acc, book) => {
-    const time = calculateReadingTime(book.pages, book.language as LanguageKey);
-    return acc + time.minutes;
-  }, 0);
-  return makeReadingTime(totalMinutes);
-}
-
-// ─── ANIME / MOVIES / TV ─────────────────────────────────────────────────────
-
-
-
-
 // ─── MANGA ───────────────────────────────────────────────────────────────────
 
 // Calibrated to MAL benchmark: 20,533 ch = 123.99 days → ~8.69 min/chapter

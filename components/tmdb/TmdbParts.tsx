@@ -1,7 +1,6 @@
 import Image from "next/image";
 import { Film } from "lucide-react";
 import { TMDB_NOTICE } from "@/lib/tmdb";
-import { GB_NOTICE, GB_NOTICE_HREF } from "@/lib/google-books";
 
 /** A search-result poster thumbnail, straight from the source's CDN (TMDB or MyAnimeList). */
 export function Poster({ src }: { src: string | null }) {
@@ -64,16 +63,23 @@ export function MalNotice({ className = "", kind = "Anime" }: { className?: stri
   );
 }
 
-/** Google Books' attribution, on Add Book and the book page. */
-export function GbNotice({ className = "" }: { className?: string }) {
+/** A two-way choice (English or romaji titles, and the like) as a pair of segmented buttons. */
+export function Toggle({ label, value, onChange, off, on }: {
+  label: string; value: boolean; onChange: (v: boolean) => void; off: string; on: string;
+}) {
   return (
-    <p className={`text-[11px] text-gray-400 ${className}`}>
-      {GB_NOTICE}{" "}
-      <a href={GB_NOTICE_HREF} target="_blank" rel="noreferrer" className="underline">books.google.com</a>.
-    </p>
+    <div>
+      <span className="block text-xs font-semibold text-gray-500 mb-1">{label}</span>
+      <div className="grid grid-cols-2 gap-1 p-1 bg-gray-100 rounded-lg" role="group" aria-label={label}>
+        {[false, true].map((v) => (
+          <button key={String(v)} type="button" onClick={() => onChange(v)} aria-pressed={value === v}
+            className={`px-3 py-2.5 sm:py-1.5 rounded-md text-xs font-semibold transition-colors ${
+              value === v ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-800"
+            }`}>
+            {v ? on : off}
+          </button>
+        ))}
+      </div>
+    </div>
   );
-}
-
-export function CatalogNotice({ className = "" }: { className?: string }) {
-  return <GbNotice className={className} />;
 }

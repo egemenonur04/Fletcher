@@ -200,3 +200,10 @@ export function pickManga(row: Pick<MangaListRow, "title" | "mediaType">, candid
     [m.title, m.titleEn, ...m.synonyms].some((t) => t && normaliseTitle(t) === wanted));
   return named.find((m) => m.mediaType === row.mediaType) ?? named[0] ?? null;
 }
+
+/** What to search MyAnimeList for: the title, cut at a word under 64 characters. */
+export function searchQuery(title: string): string {
+  if (title.length <= 64) return title;
+  const cut = title.slice(0, 64);
+  return cut.slice(0, cut.lastIndexOf(" ") > 20 ? cut.lastIndexOf(" ") : 64).trim();
+}
