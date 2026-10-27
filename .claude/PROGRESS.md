@@ -875,10 +875,15 @@
   RLS on all — verified against the file), 016 AP seed (6 courses, 37 units), 039's 7 categories,
   public `covers` storage bucket. Vercel env: `AUTH_SECRET` (random, prod+preview), `SUPABASE_URL`;
   user had added `GOOGLE_BOOKS_API_KEY` (production only).
-  **User still to add in Vercel:** `DATABASE_URL` (Supabase → Connect → Transaction pooler, port
-  6543, with the DB password — direct `db.*` host is IPv6-only, Vercel can't reach it),
-  `AUTH_PASSWORD`, `SUPABASE_SERVICE_ROLE_KEY` (cover uploads). Then check Settings → Git is
-  linked to `egemenonur04/Fletcher` and deploy `main`. Optional keys per README.
+  `DATABASE_URL` uses role `fletcher_app` (LOGIN BYPASSRLS, DML on public + default privileges for
+  tables postgres creates later) through the transaction pooler `aws-1-ap-southeast-1…:6543` —
+  the MCP can't reset the postgres password. Host guessed (aws-1 vs aws-0): unverified until the
+  first logged-in page load; "Tenant or user not found" in runtime logs means switch to aws-0.
+  `AUTH_PASSWORD` set by Claude, told to the user in chat. First production deploy of `main`
+  (7a98c71) READY at fletcher-roan.vercel.app; /login renders.
+  **Still open:** user to log in and confirm pages load; `SUPABASE_SERVICE_ROLE_KEY` (cover
+  uploads) is the user's to add; Vercel Authentication is on for *.vercel.app (blocks the phone) —
+  turn off or add a custom domain. Optional keys (TMDB, MAL, ComicVine, Steam) per README.
 
 - **Move the site to sadwankel.site** (user, 2026-10-25). Code already uses `www.sadwankel.site`
   (Scriptable scripts, Open Library User-Agent). On 2026-10-25 DNS still pointed at Namecheap's
