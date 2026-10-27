@@ -256,6 +256,22 @@
 
 ## Next
 
+**Redesign plan (user, 2026-10-27, in Turkish).** Decisions, all from the user: replace every
+look with ONE black-and-white minimalist design modelled on remarkable.com (theme picker goes);
+questions come from College Board's SAT Suite Question Bank at runtime (unofficial endpoint;
+collegeboard.org is blocked from this sandbox, so the user tests first); delete Wardrobe, Books,
+Anime, TV (code + tables). Order: design first, then SAT, then Health.
+- [ ] **1. Design** — one theme, reMarkable look; remove ThemePicker, other looks, their fonts;
+      rewrite `docs/design/` and AGENTS.md's "Soft Club" section to point at the new design.
+- [ ] **2. Delete** Wardrobe, Books, Anime, TV (pages, API, components, lib, Prisma models,
+      a drop migration, fresh-install regenerated, nav/portal links).
+- [ ] **3. SAT category** — top-level section holding Vocabulary (moved from Study) and a
+      Question Bank: browse/filter College Board questions, then solve them in a Bluebook-style
+      exam screen (timer, mark for review, question navigator, eliminator, calculator, reference).
+- [ ] **4. Health** — Diet/calorie parts become Health; Strava connect (OAuth; user creates a
+      Strava API app → client ID/secret in Vercel), runs imported; exercise routine log;
+      cumulative health tracking.
+
 - [x] **Floating back button** (asked 2026-10-25). One control in the root layout
       (`components/layout/FloatingBackButton.tsx`), fixed bottom-right, shown once a long page
       has scrolled past the arrow at the top. `lib/back-nav.ts` steps back through this tab's
