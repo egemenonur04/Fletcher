@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { BookMarked, HeartPulse, Wallet, GraduationCap, ShoppingBag } from "lucide-react";
+import { BookMarked, HeartPulse, PenLine, Wallet, GraduationCap, ShoppingBag } from "lucide-react";
 import { APP_TIME_ZONE } from "@/lib/dates";
 
 const SECTIONS = [
+  { href: "/sat", label: "SAT", description: "Official Question Bank in a Bluebook-style screen, and vocabulary", icon: PenLine },
   { href: "/study", label: "Study", description: "Sessions and the stats they level, APs, planner, GPA", icon: GraduationCap },
   { href: "/self-care", label: "Self Care", description: "Today's meal plan and water", icon: HeartPulse },
   { href: "/finances", label: "Finances", description: "Monthly budget, expenses and carryover", icon: Wallet },

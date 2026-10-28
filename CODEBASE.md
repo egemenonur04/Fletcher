@@ -255,6 +255,19 @@ answer carries the card's `reps`, so a double tap is refused (counted once).
 (Physics C) render as one continuously-numbered sequence. Ticking a unit stores a timestamp, so
 it doubles as "finished on".
 
+**SAT** (`/sat`, its own section; Vocabulary moved here from `/study/sat-vocab`, which redirects).
+The Question Bank lists College Board's SAT Suite Question Bank, fetched server-side from its public
+but undocumented API (`lib/sat-qbank-service.ts`: `get-questions` per section, cached 12 h;
+`get-question {external_id}` or `saic.collegeboard.org/disclosed/{ibn}.json` per question, cached
+30 days). `lib/sat-qbank.ts` reads both question shapes into one, de-duplicates the index and marks
+answers (a typed answer is right if it equals, or is worth the same number as, any accepted one);
+`lib/sat-html.ts` cleans the HTML (MathML and SVG kept, scripts/handlers/links dropped) before it is
+cached or sent. Filters (domain, skill, difficulty, last result) live in the address. A practice set
+is `/sat/practice?ids=…` (outside the sidebar's route group, full-window): Bluebook's frame — clock at
+Bluebook's pace (32 min/27 R&W, 35 min/22 Math), directions, Desmos's SAT calculator in an iframe, a
+reference sheet, Mark for Review, the answer eliminator, the navigator, Check Your Work, Submit, then
+results with explanations. Only answers are stored (`SatAttempt`, 042), marked on the server.
+
 **GPA** (`/study/gpa`). A `GpaLesson` is a lesson's weekly hours plus, for each half of the year,
 two exams, two performances and a project. Averages are not stored. A half's lesson average is
 the mean of the marks filled in (a blank is skipped, not a zero); the half weights those lessons

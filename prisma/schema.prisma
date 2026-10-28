@@ -804,3 +804,27 @@ model GpaLesson {
 
   @@index([position])
 }
+
+/// One answer to a SAT Question Bank question. The questions themselves stay at College Board
+/// (lib/sat-qbank-service.ts); only what you answered is kept, so the bank can show what you
+/// have done and what you got wrong.
+model SatAttempt {
+  id         String   @id @default(cuid())
+  /// College Board's short question id.
+  questionId String
+  /// "rw" or "math".
+  section    String
+  domain     String
+  skill      String
+  difficulty String?
+  /// The letter picked, or what was typed. Null when the question was left blank.
+  answer     String?
+  /// Null when the bank had no key for the question.
+  correct    Boolean?
+  /// Time spent on the question, in seconds.
+  seconds    Int?
+  createdAt  DateTime @default(now())
+
+  @@index([questionId])
+  @@index([createdAt])
+}

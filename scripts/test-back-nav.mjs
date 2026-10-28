@@ -1,5 +1,5 @@
 // The floating back button's destinations. A wrong parent sends someone to a 404 or, worse,
-// back onto the page they just left (the finances index redirects).
+// back onto the page they just left (the finances index and the old vocabulary paths redirect).
 //
 // Run: node --experimental-strip-types --import ./scripts/alias.mjs scripts/test-back-nav.mjs
 import {
@@ -76,10 +76,11 @@ const parents = [
   ["/shopping/new", "/shopping"],
   ["/shopping", "/"],
   ["/self-care", "/"],
-  ["/study/sat-vocab/words", "/study/sat-vocab"],
-  ["/study/sat-vocab/flashcards", "/study/sat-vocab"],
-  ["/study/sat-vocab/quick", "/study/sat-vocab"],
-  ["/study/sat-vocab", "/study"],
+  ["/sat/vocab/words", "/sat/vocab"],
+  ["/sat/vocab/flashcards", "/sat/vocab"],
+  ["/sat/vocab/quick", "/sat/vocab"],
+  ["/sat/vocab", "/sat"],
+  ["/sat", "/"],
   ["/study/review?date=2026-10-24", "/study"],
   ["/study/modules", "/study"],
   ["/study", "/"],
@@ -139,6 +140,12 @@ trail = restoreTrail(null, "/", null, ORIGIN);
 trail = applyNavigation(trail, "/finances", "push");
 trail = applyNavigation(trail, "/finances/2026/10", "push");
 eq(decideBack(trail, "/finances/2026/10", NOW), { type: "href", href: "/" }, "skip the finances index, it redirects back here");
+
+// An old vocabulary path does the same.
+trail = restoreTrail(null, "/", null, ORIGIN);
+trail = applyNavigation(trail, "/study/sat-vocab", "push");
+trail = applyNavigation(trail, "/sat/vocab", "push");
+eq(decideBack(trail, "/sat/vocab", NOW), { type: "href", href: "/" }, "skip /study/sat-vocab, it redirects back here");
 
 // Login bounces a signed-out session straight back. Don't offer it.
 trail = applyNavigation(restoreTrail(null, "/library", null, ORIGIN), "/login", "push");

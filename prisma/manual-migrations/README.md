@@ -60,6 +60,7 @@ declares. Getting this backwards is what broke books and manga once already.
 | `039-study-tasks.sql` | Creates the study planner: `StudySubject`, `StudyCategory`, `StudyTask`, `StudySubtask`, and the priority and status enums. Seeds the seven default categories only while the category table is empty, so a re-run does not undo a rename. Deleting a subject or category sets the task's link to null; deleting a task deletes its steps. Additive, RLS on — run **before** (or right as) the deploy. The Planner page says so until it has run; the rest of Study does not read these tables. |
 | `040-gpa.sql` | Creates `GpaLesson` for the GPA calculator: weekly hours and the marks for each half of the year. Averages are computed, not stored. Additive, RLS on — run **before** (or right as) the deploy. The GPA page still opens without it and says saving waits for it. |
 | `041-drop-books-anime-tv-wardrobe.sql` | Drops Books, Anime, TV and the Wardrobe: their ten tables and the enums only they used. **Destructive** — run **after** the deploy that removes those sections. Nothing breaks if it is never run. Verified on a local copy built from the old `fresh-install.sql`: re-run is a no-op, `migrate diff` empty after. |
+| `042-sat-attempts.sql` | Creates `SatAttempt` (one row per Question Bank answer: question id, section, domain, skill, difficulty, answer, right or wrong, seconds), RLS on. Additive — the bank works without it; results aren't saved until it has run. Verified locally: re-run is a no-op, `migrate diff` empty after. |
 
 ## How 019 was verified
 

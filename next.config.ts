@@ -37,6 +37,13 @@ const nextConfig: NextConfig = {
     // Cover art is immutable once mirrored; the 60s default re-transforms it constantly.
     minimumCacheTTL: 31_536_000,
   },
+  async redirects() {
+    return [
+      // Vocabulary moved from Study to the SAT section. Old bookmarks still land. Temporary, so
+      // browsers don't cache it if the path is ever reused.
+      { source: "/study/sat-vocab/:path*", destination: "/sat/vocab/:path*", permanent: false },
+    ];
+  },
   async headers() {
     return [
       {

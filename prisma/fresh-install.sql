@@ -554,6 +554,22 @@ CREATE TABLE "GpaLesson" (
     CONSTRAINT "GpaLesson_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "SatAttempt" (
+    "id" TEXT NOT NULL,
+    "questionId" TEXT NOT NULL,
+    "section" TEXT NOT NULL,
+    "domain" TEXT NOT NULL,
+    "skill" TEXT NOT NULL,
+    "difficulty" TEXT,
+    "answer" TEXT,
+    "correct" BOOLEAN,
+    "seconds" INTEGER,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "SatAttempt_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "Movie_tmdbId_key" ON "Movie"("tmdbId");
 
@@ -728,6 +744,12 @@ CREATE INDEX "VocabReview_cardId_idx" ON "VocabReview"("cardId");
 -- CreateIndex
 CREATE INDEX "GpaLesson_position_idx" ON "GpaLesson"("position");
 
+-- CreateIndex
+CREATE INDEX "SatAttempt_questionId_idx" ON "SatAttempt"("questionId");
+
+-- CreateIndex
+CREATE INDEX "SatAttempt_createdAt_idx" ON "SatAttempt"("createdAt");
+
 -- AddForeignKey
 ALTER TABLE "Movie" ADD CONSTRAINT "Movie_universeId_fkey" FOREIGN KEY ("universeId") REFERENCES "MovieUniverse"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
@@ -813,3 +835,4 @@ ALTER TABLE "VocabQuestion" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "VocabCard" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "VocabReview" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "GpaLesson" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "SatAttempt" ENABLE ROW LEVEL SECURITY;

@@ -47,6 +47,7 @@ th,
 .text-\[11px\],
 .text-\[10px\],
 .uppercase,
+.font-ui,
 .theme-brand,
 .theme-topbar {
   font-family: var(--font-ui);
@@ -146,6 +147,48 @@ button {
   border-bottom: 1px solid var(--color-gray-900);
   height: 4px;
 }
+
+/* ── SAT questions ──────────────────────────────────────────────────────── */
+
+/* Question Bank text (cleaned HTML from College Board): serif prose, MathML equations, tables
+ * and SVG figures that fit the column. */
+.sat-content {
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: 1.0625rem;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.sat-content p + p,
+.sat-content p + figure,
+.sat-content figure + p,
+.sat-content table,
+.sat-content ul,
+.sat-content ol {
+  margin-top: 0.75em;
+}
+.sat-content ul { list-style: disc; padding-left: 1.5em; }
+.sat-content ol { list-style: decimal; padding-left: 1.5em; }
+.sat-content table { border-collapse: collapse; margin-inline: auto; }
+.sat-content th,
+.sat-content td {
+  border: 1px solid var(--color-gray-700);
+  padding: 0.25em 0.6em;
+  text-align: center;
+}
+.sat-content img,
+.sat-content svg {
+  max-width: 100%;
+  height: auto;
+  margin-inline: auto;
+}
+.sat-content math { font-size: 1.1em; }
+.sat-content math[display="block"] { margin: 0.6em 0; }
+.sat-content .sr-only,
+.sat-content [class*="sr-only"] {
+  position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;
+}
+.sat-choice p { margin: 0; }
 
 @media (prefers-reduced-motion: reduce) {
   *,

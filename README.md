@@ -7,7 +7,8 @@ A personal hub, deployed on Vercel and backed by Supabase Postgres. Five section
 | **Library** | Manga, comics, films, games and articles. Universe hierarchies, progress tracking, derived status, Steam sync. |
 | **Self Care** | Today's meals from the monthly diet plan, ticked off as you eat them, with a water log toward the day's goal — installable on the home screen as "Diet", and usable offline. |
 | **Finances** | Monthly budget, expenses, additional income and carryover, in TRY. Includes an installable mobile expense logger that works offline. |
-| **Study** | Timed study sessions against named modules, levelling fourteen stats. Plus study-time totals, an AP unit tracker and a SAT vocabulary test. |
+| **SAT** | College Board's SAT Question Bank, filtered by domain, skill and difficulty and solved in a Bluebook-style practice screen; plus the SAT vocabulary test and flashcards. |
+| **Study** | Timed study sessions against named modules, levelling fourteen stats. Plus study-time totals, a planner, an AP unit tracker and a GPA calculator. |
 
 ## Running it
 

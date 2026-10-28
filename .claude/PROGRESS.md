@@ -274,15 +274,16 @@ Anime, TV (code + tables). Order: design first, then SAT, then Health.
       `041-drop-books-anime-tv-wardrobe.sql` (destructive, after deploy; tested twice locally,
       diff empty); `fresh-install.sql` regenerated (35 tables). Checks: typecheck, lint, tests,
       build, screenshots.
-- [ ] **3. SAT section** (in progress 2026-10-28) — `/sat` with its own sidebar (route group
-      `app/sat/(shell)`); Vocabulary moved there from `/study/sat-vocab` (redirect kept). Question
-      Bank: College Board's unofficial qbank API (POST
-      `qbank-api.collegeboard.org/msreportingquestionbank-prod/questionbank/digital/get-questions`
-      `{asmtEventId:99,test:1|2,domain:"INI,CAS,EOI,SEC"|"H,P,Q,S"}`; `.../get-question`
-      `{external_id}`; legacy `saic.collegeboard.org/disclosed/{ibn}.json` → `[0]`), fetched
-      server-side and cached, HTML sanitised (sanitize-html). Attempts in `SatAttempt` (042).
-      Practice at `/sat/practice?ids=` full-screen in a Bluebook-style frame (timer, mark for
-      review, eliminator, navigator, Desmos iframe, reference sheet, check-your-work, results).
+- [x] **3. SAT section** (2026-10-28) — `/sat` with its own sidebar (`app/sat/(shell)`), Vocabulary
+      moved from `/study/sat-vocab` (redirect + back-nav skip). Question Bank from College Board's
+      unofficial qbank API (`lib/sat-qbank*.ts`, `lib/sat-html.ts` sanitize-html, cached 12 h/30 d),
+      filters in the URL, random sets of 10–54. `/sat/practice?ids=` Bluebook frame: clock at
+      Bluebook pace, directions, Desmos SAT iframe, reference sheet, Mark for Review, eliminator,
+      navigator, Check Your Work, results + explanations. `SatAttempt` (042) marked server-side —
+      042 applied to Supabase by Claude. Tested against a local College Board stand-in (current,
+      typed and ibn items) in Chromium at 1280/390; 46 unit assertions. **Not yet seen against the
+      real bank** (collegeboard.org and desmos.com are blocked from the sandbox) — first live check
+      is the user's. Not built: Bluebook's highlighter/notes tool.
 - [ ] **4. Health** — Diet/calorie parts become Health; Strava connect (OAuth; user creates a
       Strava API app → client ID/secret in Vercel), runs imported; exercise routine log;
       cumulative health tracking.
