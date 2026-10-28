@@ -304,17 +304,18 @@ Anime, TV (code + tables). Order: design first, then SAT, then Health.
       questions original; the PDF is not committed. Done lessons stored in `UcatLessonDone` (046, applied to Supabase by Claude with a grant to `fletcher_app`).
       Checks: typecheck, lint, tests (UCAT 28 assertions incl. every key in range), build, Chromium
       (marking, done button, 404s, no sideways scroll at 390), fresh-install on an empty DB (29 tables).
-- [ ] **4. Health** (in progress 2026-10-28). Plan: Self Care is renamed **Health** in the UI;
-      URLs stay `/self-care` (the installed Diet app, sw.js shell and Scriptable widgets use them).
-      Sidebar: Diet · Exercise (`/self-care/exercise`) · Progress (`/self-care/progress`).
-      Exercise: Strava card (connect via OAuth → `StravaAccount`; Sync imports activities into
-      `Workout` with `stravaId`; disconnect) + manual log (date, kind, minutes, distance, kcal,
-      notes, exercises as sets × reps × kg in `WorkoutSet`). Progress: totals for week / month /
-      year / all, 12-week bars, per-kind split, body-weight log (`BodyWeight`) with trend, last 7
-      days of diet (kcal eaten vs plan, water). Migration 047. Pure logic in `lib/health.ts`,
-      Strava client in `lib/strava.ts` (`STRAVA_CLIENT_ID`/`STRAVA_CLIENT_SECRET`; `STRAVA_BASE_URL`
-      only for a local stand-in). strava.com is blocked from the sandbox: endpoints taken from the
-      strava-v3 4.0.2 npm source; first live check is the user's.
+- [x] **4. Health** (2026-10-28). Self Care is **Health** in the UI; URLs stay `/self-care`
+      (installed Diet app, sw.js shell, Scriptable widgets). Sidebar: Diet · Exercise · Progress.
+      Exercise (`/self-care/exercise`): Strava card (OAuth → `StravaAccount`, token refresh, sync
+      upserts by `stravaId` from a week before the last sync, disconnect revokes and keeps imports)
+      + manual log (kind, minutes, distance, kcal, notes, gym exercises as sets × reps × kg in
+      `WorkoutSet`). Progress (`/self-care/progress`): week/month/year/all totals, 12-week chart,
+      week streak, minutes by kind, body weight (`BodyWeight`) with trend, last 7 days of diet.
+      Logic in `lib/health.ts` (34 assertions), Strava in `lib/strava.ts`. 047 applied to Supabase
+      by Claude (grants to `fletcher_app`). strava.com is blocked from the sandbox: endpoints from
+      strava-v3 4.0.2's source, tested end to end against a local stand-in (connect, expired-token
+      refresh, import, re-sync without doubles, disconnect, forged state refused). **Not yet seen
+      against real Strava** — needs the user's API app (see Blocked).
 
 - [x] **Floating back button** (asked 2026-10-25). One control in the root layout
       (`components/layout/FloatingBackButton.tsx`), fixed bottom-right, shown once a long page
@@ -928,6 +929,12 @@ Anime, TV (code + tables). Order: design first, then SAT, then Health.
 
 ## Blocked / needs the user
 
+- **Strava (for Health → Exercise).** Create an API app at https://www.strava.com/settings/api —
+  Authorization Callback Domain = the site's domain only (e.g. `fletcher-roan.vercel.app`, no
+  https://). Then Vercel → fletcher → Settings → Environment Variables: `STRAVA_CLIENT_ID` and
+  `STRAVA_CLIENT_SECRET` (Production), redeploy, and press Connect Strava on `/self-care/exercise`.
+  Claude can add the env vars through the Vercel connector if given the two values. Strava's new
+  apps allow 1 athlete — enough for this site.
 - **Run `045-drop-library.sql`** in the Supabase SQL Editor (the Library is gone from the code;
   the tables are just unused). Destructive; harmless if never run.
 - **Optional:** `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` in Vercel were only for cover uploads

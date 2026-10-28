@@ -96,8 +96,8 @@ export default function WorkoutLog({ initial }: { initial: Workout[] }) {
           <fieldset className="space-y-2">
             <legend className="text-sm font-medium text-gray-700 mb-1.5">Exercises</legend>
             {sets.map((row, i) => (
-              <div key={i} className="grid grid-cols-[1fr_4rem_4rem_5rem_auto] gap-2 items-center">
-                <input aria-label={`Exercise ${i + 1}`} value={row.exercise} onChange={setRow(i, "exercise")} maxLength={60} placeholder="Squat" className={inputCls} />
+              <div key={i} className="grid grid-cols-[1fr_1fr_1fr_auto] sm:grid-cols-[1fr_5rem_5rem_5.5rem_auto] gap-2 items-center">
+                <input aria-label={`Exercise ${i + 1}`} value={row.exercise} onChange={setRow(i, "exercise")} maxLength={60} placeholder="Squat" className={`${inputCls} col-span-4 sm:col-span-1`} />
                 <input aria-label={`Sets for exercise ${i + 1}`} type="number" inputMode="numeric" min={1} max={50} value={row.sets} onChange={setRow(i, "sets")} placeholder="Sets" className={inputCls} />
                 <input aria-label={`Reps for exercise ${i + 1}`} type="number" inputMode="numeric" min={1} max={1000} value={row.reps} onChange={setRow(i, "reps")} placeholder="Reps" className={inputCls} />
                 <input aria-label={`kg for exercise ${i + 1}`} type="number" inputMode="decimal" min={0} max={1000} step={0.5} value={row.weightKg} onChange={setRow(i, "weightKg")} placeholder="kg" className={inputCls} />

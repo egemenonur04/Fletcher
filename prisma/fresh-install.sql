@@ -55,6 +55,58 @@ CREATE TABLE "WaterIntake" (
 );
 
 -- CreateTable
+CREATE TABLE "Workout" (
+    "id" TEXT NOT NULL,
+    "date" DATE NOT NULL,
+    "kind" TEXT NOT NULL,
+    "title" TEXT,
+    "minutes" INTEGER NOT NULL,
+    "distanceKm" DOUBLE PRECISION,
+    "kcal" INTEGER,
+    "notes" TEXT,
+    "stravaId" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "Workout_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "WorkoutSet" (
+    "id" TEXT NOT NULL,
+    "workoutId" TEXT NOT NULL,
+    "position" INTEGER NOT NULL,
+    "exercise" TEXT NOT NULL,
+    "sets" INTEGER NOT NULL,
+    "reps" INTEGER NOT NULL,
+    "weightKg" DOUBLE PRECISION,
+
+    CONSTRAINT "WorkoutSet_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "BodyWeight" (
+    "date" DATE NOT NULL,
+    "kg" DOUBLE PRECISION NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "BodyWeight_pkey" PRIMARY KEY ("date")
+);
+
+-- CreateTable
+CREATE TABLE "StravaAccount" (
+    "id" TEXT NOT NULL DEFAULT 'me',
+    "athleteId" TEXT NOT NULL,
+    "athleteName" TEXT,
+    "accessToken" TEXT NOT NULL,
+    "refreshToken" TEXT NOT NULL,
+    "expiresAt" TIMESTAMP(3) NOT NULL,
+    "lastSyncAt" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "StravaAccount_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "FinanceConfig" (
     "id" TEXT NOT NULL DEFAULT 'global',
     "monthlyBudget" DOUBLE PRECISION NOT NULL DEFAULT 0,
@@ -419,6 +471,15 @@ CREATE TABLE "UcatLessonDone" (
 CREATE INDEX "WaterIntake_date_idx" ON "WaterIntake"("date");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "Workout_stravaId_key" ON "Workout"("stravaId");
+
+-- CreateIndex
+CREATE INDEX "Workout_date_idx" ON "Workout"("date");
+
+-- CreateIndex
+CREATE INDEX "WorkoutSet_workoutId_idx" ON "WorkoutSet"("workoutId");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "Expense_clientId_key" ON "Expense"("clientId");
 
 -- CreateIndex
@@ -536,6 +597,9 @@ CREATE INDEX "SatAttempt_createdAt_idx" ON "SatAttempt"("createdAt");
 CREATE INDEX "UcatScore_takenOn_idx" ON "UcatScore"("takenOn");
 
 -- AddForeignKey
+ALTER TABLE "WorkoutSet" ADD CONSTRAINT "WorkoutSet_workoutId_fkey" FOREIGN KEY ("workoutId") REFERENCES "Workout"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "ShopProduct" ADD CONSTRAINT "ShopProduct_shopId_fkey" FOREIGN KEY ("shopId") REFERENCES "Shop"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -602,3 +666,7 @@ ALTER TABLE "GpaLesson" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "SatAttempt" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "UcatScore" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "UcatLessonDone" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "Workout" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "WorkoutSet" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "BodyWeight" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "StravaAccount" ENABLE ROW LEVEL SECURITY;

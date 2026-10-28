@@ -84,7 +84,7 @@ export default async function ProgressPage() {
               {kinds.map((k) => (
                 <tr key={k.kind}>
                   <td className="py-2 pr-3 w-24">{kindLabel(k.kind)}</td>
-                  <td className="py-2 pr-3">
+                  <td className="py-2 pr-3 w-full">
                     <div className="h-2 bg-gray-900 rounded-r" style={{ width: `${(k.minutes / kindMax) * 100}%` }} />
                   </td>
                   <td className="py-2 pr-3 text-right tabular-nums whitespace-nowrap">{formatMinutes(k.minutes)}</td>

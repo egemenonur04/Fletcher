@@ -1,12 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { formatMinutes } from "@/lib/health";
 
 // Two single-series charts in ink on paper: minutes per week as columns, body weight as a line.
 // Each has a hover tooltip; the numbers behind them are in a table beside or below.
 
-const W = 640;
 const H = 180;
 const PAD = { top: 16, right: 12, bottom: 24, left: 40 };
 const INK = "var(--color-gray-900)";
@@ -16,6 +15,23 @@ const MUTED = "var(--color-gray-500)";
 const short = (date: string) =>
   new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", timeZone: "UTC" }).format(new Date(`${date}T00:00:00Z`));
 
+/**
+ * The chart's drawn width in px, so text stays its real size: a fixed viewBox scaled down to a
+ * phone shrinks 11px labels to 6px.
+ */
+function useWidth(): [React.RefObject<HTMLDivElement | null>, number] {
+  const ref = useRef<HTMLDivElement>(null);
+  const [width, setWidth] = useState(640);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new ResizeObserver(([entry]) => setWidth(Math.max(280, Math.round(entry.contentRect.width))));
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+  return [ref, width];
+}
+
 /** Round up to a clean axis maximum: 60, 120, 300… */
 function niceMax(v: number): number {
   if (v <= 0) return 60;
@@ -23,7 +39,7 @@ function niceMax(v: number): number {
   return steps.find((s) => s >= v) ?? Math.ceil(v / 1000) * 1000;
 }
 
-function Tooltip({ x, y, children }: { x: number; y: number; children: React.ReactNode }) {
+function Tooltip({ x, y, W, children }: { x: number; y: number; W: number; children: React.ReactNode }) {
   // Kept inside the plot: flips to the left of the point in the right half.
   const left = x > W / 2;
   return (
@@ -36,6 +52,7 @@ function Tooltip({ x, y, children }: { x: number; y: number; children: React.Rea
 
 export function WeeklyBars({ data }: { data: { week: string; minutes: number }[] }) {
   const [hover, setHover] = useState<number | null>(null);
+  const [ref, W] = useWidth();
   const max = niceMax(Math.max(...data.map((d) => d.minutes)));
   const plotW = W - PAD.left - PAD.right;
   const plotH = H - PAD.top - PAD.bottom;
@@ -45,7 +62,7 @@ export function WeeklyBars({ data }: { data: { week: string; minutes: number }[]
   const ticks = [0, max / 2, max];
 
   return (
-    <div className="relative">
+    <div ref={ref} className="relative">
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto" role="img" aria-label="Minutes trained per week, last 12 weeks" onMouseLeave={() => setHover(null)}>
         {ticks.map((t) => (
           <g key={t}>
@@ -68,7 +85,7 @@ export function WeeklyBars({ data }: { data: { week: string; minutes: number }[]
                   fill={INK} opacity={hover === null || hover === i ? 1 : 0.35}
                 />
               )}
-              {(i === 0 || i === data.length - 1 || i % 3 === 0) && (
+              {(i === data.length - 1 || i % (W < 480 ? 4 : 3) === 0) && (
                 <text x={cx} y={H - 6} textAnchor="middle" fontSize={11} fill={MUTED}>{i === data.length - 1 ? "This wk" : short(d.week)}</text>
               )}
               {/* Hit target: the whole slot, taller and wider than the bar. */}
@@ -80,7 +97,7 @@ export function WeeklyBars({ data }: { data: { week: string; minutes: number }[]
         })}
       </svg>
       {hover !== null && (
-        <Tooltip x={PAD.left + slot * hover + slot / 2} y={y(data[hover].minutes)}>
+        <Tooltip W={W} x={PAD.left + slot * hover + slot / 2} y={y(data[hover].minutes)}>
           Week of {short(data[hover].week)} · <strong>{formatMinutes(data[hover].minutes)}</strong>
         </Tooltip>
       )}
@@ -90,6 +107,7 @@ export function WeeklyBars({ data }: { data: { week: string; minutes: number }[]
 
 export function WeightLine({ data }: { data: { date: string; kg: number }[] }) {
   const [hover, setHover] = useState<number | null>(null);
+  const [ref, W] = useWidth();
   const points = [...data].sort((a, b) => a.date.localeCompare(b.date));
   if (points.length < 2) return null;
   const t = (d: string) => new Date(`${d}T00:00:00Z`).getTime();
@@ -106,7 +124,7 @@ export function WeightLine({ data }: { data: { date: string; kg: number }[] }) {
   const last = points[points.length - 1];
 
   return (
-    <div className="relative">
+    <div ref={ref} className="relative">
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto" role="img" aria-label={`Body weight from ${short(points[0].date)} to ${short(last.date)}`} onMouseLeave={() => setHover(null)}>
         {[lo, (lo + hi) / 2, hi].map((v) => (
           <g key={v}>
@@ -129,7 +147,7 @@ export function WeightLine({ data }: { data: { date: string; kg: number }[] }) {
         ))}
       </svg>
       {hover !== null && (
-        <Tooltip x={x(points[hover].date)} y={y(points[hover].kg)}>
+        <Tooltip W={W} x={x(points[hover].date)} y={y(points[hover].kg)}>
           {short(points[hover].date)} · <strong>{points[hover].kg} kg</strong>
         </Tooltip>
       )}

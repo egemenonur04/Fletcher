@@ -22,7 +22,7 @@ type size and weight and from rules, not from colour or boxes.
    is drained to near-grey by the palette.
 2. **Two typefaces.** Source Serif 4 (`--font-body`) for headlines and running text; Libre Franklin
    (`--font-ui`) for buttons, fields, menus, labels and small print. `app/design.css` assigns them —
-   `h1`–`h3` serif bold, `button`/`input`/`label`/`nav`/`.text-xs`/`.uppercase` Franklin. Don't set
+   `h1`–`h3` serif bold, `button`/`input`/`label`/`legend`/`nav`/`.text-xs`/`.uppercase` Franklin. Don't set
    fonts in components.
 3. **Headlines are bold serif,** large and tight. Section labels are kickers: small, bold, spaced
    Franklin caps (`text-xs font-bold uppercase tracking-wide`).

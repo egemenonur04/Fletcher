@@ -1,6 +1,6 @@
 # MyPortal — architecture
 
-A personal hub: **Self Care** (diet), **Finances**, **Study** (APs, GPA, SAT, UCAT) and **Shopping**, behind one
+A personal hub: **Health** (diet, exercise, Strava, progress), **Finances**, **Study** (APs, GPA, SAT, UCAT) and **Shopping**, behind one
 password. Next.js App Router on Vercel, Prisma against Supabase Postgres, Tailwind.
 
 This file covers how the pieces fit and the conventions that hold across them. For what is done
@@ -68,10 +68,25 @@ script on the phone.
 
 ## Data model
 
-29 models, 8 enums. The shape by area:
+33 models, 8 enums. The shape by area:
 
 **Library** was removed on 2026-10-28 (Books, Anime, TV and the Wardrobe the day before); 041 and
 045 drop its tables.
+
+**Health** (`/self-care`, still the URL: the installed Diet app, `sw.js`'s offline shell and the
+Scriptable widgets use it; renamed from Self Care on 2026-10-28). Diet is `MealCheck` +
+`WaterIntake` against the plan in `lib/meal-plans/`. Exercise (`/self-care/exercise`): a `Workout`
+is a day, a kind (`WORKOUT_KINDS` in `lib/health.ts` — gym, run, walk, ride, swim, sport, other),
+minutes and optional distance / kcal / notes; a gym session's routine is its `WorkoutSet`s
+(exercise, sets × reps × kg, deleted with it). Strava (`lib/strava.ts`): OAuth with a one-time
+state cookie, `StravaAccount` holds the one athlete's tokens (refreshed in place — Strava may
+rotate the refresh token), and a sync upserts activities by `stravaId` from a week before the last
+sync (everything the first time; at most 10 pages of 200, after which the bookmark stays put).
+An activity's day is its own `start_date_local`. Deleting an imported workout is allowed; a sync
+covering that week brings it back. `BodyWeight` is one weigh-in a day. Progress
+(`/self-care/progress`) adds them up in `lib/health.ts` (tested): week / month / year / all-time,
+minutes per Monday-first week, week streak, minutes by kind, weight change, and the last 7 days of
+the diet from `dietRange`. Migration 047.
 
 **Finances.** `FinanceConfig` (budget), `Expense`, `AdditionalIncome`, `Subscription`. Expenses
 carry a unique `clientId` so the offline logger can retry without duplicating — a client-side
@@ -216,7 +231,8 @@ The rules are in `docs/design/paper.md`.
 ```
 app/
   (portal)          app/page.tsx — the section cards under a masthead
-  self-care/…       the day's meals from the diet plan (/self-care, installable as "Diet", works offline)
+  self-care/…       Health: the day's meals from the diet plan (/self-care, installable as "Diet", works
+                    offline), exercise + Strava (/self-care/exercise), progress (/self-care/progress)
   finances/…        month view, plus /log (installable PWA)
   study/…           APs, GPA, SAT (question bank, practice screen, vocabulary), UCAT
   shopping/…        shops by category (a metro map); a shop's page with its products; new / edit
@@ -247,6 +263,7 @@ scriptable/             the phone widgets (Diet, Water) for the Scriptable app, 
 | `shopping.ts` / `shopping-service.ts` | Shop addresses, names from domains, categories, line codes and colours / categories in use |
 | `wash-calculator.ts` | Care labels → machine settings |
 | `meal-plan.ts` / `meal-plans/*.ts` / `meal-plan-service.ts` | The diet plan's shape, which plan covers a day, how a tick names a meal and what the ticked meals add up to / one file per month, transcribed from the user's plan (a new month is a new file added to `MEAL_PLANS`; `npm test` checks its sums) / a day's ticks and water entries, null until migration 038 has run |
+| `health.ts` / `health-service.ts` / `strava.ts` | Workouts, weigh-ins and the Strava activity mapping, with every total Progress shows (client-safe, tested) / their Prisma side / Strava OAuth, token refresh and sync |
 | `finances.ts` / `finances-utils.ts` | Month maths and carryover |
 | `fund-sources.ts` / `fund-source-client.ts` | The Base / Extra pots: carryover, balances, queued-expense adjustment / the remembered card |
 | `installments.ts` | Installment purchases: the per-month split to the kuruş, which installment a month is, paid / left |
@@ -259,7 +276,7 @@ scriptable/             the phone widgets (Diet, Water) for the Scriptable app, 
 
 `npm test` runs plain node scripts over the pure modules — date maths, the XP rule, the level
 curve, the vocabulary parser and question builder, the daily review, the report token, the SAT
-Question Bank reader and marking, UCAT scores and lessons, the shopping
+Question Bank reader and marking, UCAT scores and lessons, workouts and their totals, the shopping
 rules (addresses, categories, line codes), the finance pots (carryover per source, balances), installment splits, and the meal plans' sums. `scripts/alias.mjs` teaches node the `@/` import alias, so a pure module can
 import another the same way the app does. There is no browser test suite; UI and schema changes are verified by running the app
 against a throwaway Postgres and driving it, because the bugs that mattered here were only
