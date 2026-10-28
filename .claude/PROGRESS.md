@@ -304,9 +304,17 @@ Anime, TV (code + tables). Order: design first, then SAT, then Health.
       questions original; the PDF is not committed. Done lessons stored in `UcatLessonDone` (046, applied to Supabase by Claude with a grant to `fletcher_app`).
       Checks: typecheck, lint, tests (UCAT 28 assertions incl. every key in range), build, Chromium
       (marking, done button, 404s, no sideways scroll at 390), fresh-install on an empty DB (29 tables).
-- [ ] **4. Health** — Diet/calorie parts become Health; Strava connect (OAuth; user creates a
-      Strava API app → client ID/secret in Vercel), runs imported; exercise routine log;
-      cumulative health tracking.
+- [ ] **4. Health** (in progress 2026-10-28). Plan: Self Care is renamed **Health** in the UI;
+      URLs stay `/self-care` (the installed Diet app, sw.js shell and Scriptable widgets use them).
+      Sidebar: Diet · Exercise (`/self-care/exercise`) · Progress (`/self-care/progress`).
+      Exercise: Strava card (connect via OAuth → `StravaAccount`; Sync imports activities into
+      `Workout` with `stravaId`; disconnect) + manual log (date, kind, minutes, distance, kcal,
+      notes, exercises as sets × reps × kg in `WorkoutSet`). Progress: totals for week / month /
+      year / all, 12-week bars, per-kind split, body-weight log (`BodyWeight`) with trend, last 7
+      days of diet (kcal eaten vs plan, water). Migration 047. Pure logic in `lib/health.ts`,
+      Strava client in `lib/strava.ts` (`STRAVA_CLIENT_ID`/`STRAVA_CLIENT_SECRET`; `STRAVA_BASE_URL`
+      only for a local stand-in). strava.com is blocked from the sandbox: endpoints taken from the
+      strava-v3 4.0.2 npm source; first live check is the user's.
 
 - [x] **Floating back button** (asked 2026-10-25). One control in the root layout
       (`components/layout/FloatingBackButton.tsx`), fixed bottom-right, shown once a long page
