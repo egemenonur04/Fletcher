@@ -4,7 +4,7 @@ import { APP_TIME_ZONE } from "@/lib/dates";
 
 const SECTIONS = [
   { href: "/study", label: "Study", description: "APs and units, GPA, the SAT Question Bank and vocabulary, UCAT", icon: GraduationCap },
-  { href: "/self-care", label: "Self Care", description: "Today's meal plan and water", icon: HeartPulse },
+  { href: "/self-care", label: "Health", description: "Meal plan and water, workouts, Strava and progress", icon: HeartPulse },
   { href: "/finances", label: "Finances", description: "Monthly budget, expenses and carryover", icon: Wallet },
   { href: "/shopping", label: "Shopping", description: "Shops you've tried — what was good and what wasn't", icon: ShoppingBag },
 ];

@@ -29,6 +29,61 @@ model WaterIntake {
   @@index([date])
 }
 
+// ─── HEALTH: EXERCISE AND WEIGHT ─────────────────────────────────────────────
+
+/// A workout, typed in or imported from Strava. kind is one of lib/health.ts's WORKOUT_KINDS.
+model Workout {
+  id         String       @id @default(cuid())
+  /// Local calendar date; a Strava activity's own local start date.
+  date       DateTime     @db.Date
+  kind       String
+  title      String?
+  minutes    Int
+  distanceKm Float?
+  kcal       Int?
+  notes      String?
+  /// Strava's activity id, so a sync never imports the same activity twice.
+  stravaId   String?      @unique
+  createdAt  DateTime     @default(now())
+  sets       WorkoutSet[]
+
+  @@index([date])
+}
+
+/// One exercise in a workout's routine: 3 × 10 at 40 kg.
+model WorkoutSet {
+  id        String  @id @default(cuid())
+  workoutId String
+  workout   Workout @relation(fields: [workoutId], references: [id], onDelete: Cascade)
+  position  Int
+  exercise  String
+  sets      Int
+  reps      Int
+  weightKg  Float?
+
+  @@index([workoutId])
+}
+
+/// Body weight, at most one a day.
+model BodyWeight {
+  date      DateTime @id @db.Date
+  kg        Float
+  createdAt DateTime @default(now())
+}
+
+/// The one connected Strava athlete and its tokens (refreshed in place; Strava may rotate the
+/// refresh token on every refresh).
+model StravaAccount {
+  id           String    @id @default("me")
+  athleteId    String
+  athleteName  String?
+  accessToken  String
+  refreshToken String
+  expiresAt    DateTime
+  lastSyncAt   DateTime?
+  createdAt    DateTime  @default(now())
+}
+
 // ─── FINANCES ────────────────────────────────────────────────────────────────
 
 model FinanceConfig {
@@ -497,11 +552,11 @@ model VocabReview {
 /// One lesson on the GPA sheet. Weekly hours weight it in each half that has a mark.
 /// Averages are not stored — lib/gpa.ts works them out from the marks.
 model GpaLesson {
-  id       String @id @default(cuid())
-  name     String
+  id        String   @id @default(cuid())
+  name      String
   /// Weekly hours of the lesson.
-  hours    Float
-  position Int
+  hours     Float
+  position  Int
   /// First half of the year. Null is an empty cell, not a zero.
   h1Exam1   Float?
   h1Perf1   Float?
