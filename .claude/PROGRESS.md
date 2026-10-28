@@ -301,7 +301,7 @@ Anime, TV (code + tables). Order: design first, then SAT, then Health.
       test (MCQ; DM drag-and-drop 2/1/0; SJT ratings, half credit one step off). Content in
       `lib/ucat-content/*.ts`, registry and marking in `lib/ucat-lessons.ts`. Source: "Mastering the
       UCAT" 3rd ed. (2019, user's PDF) — retold in our own words, updated to the 2025 format, all
-      questions original; the PDF is not committed. Done lessons stored in `UcatLessonDone` (046).
+      questions original; the PDF is not committed. Done lessons stored in `UcatLessonDone` (046, applied to Supabase by Claude with a grant to `fletcher_app`).
       Checks: typecheck, lint, tests (UCAT 28 assertions incl. every key in range), build, Chromium
       (marking, done button, 404s, no sideways scroll at 390), fresh-install on an empty DB (29 tables).
 - [ ] **4. Health** — Diet/calorie parts become Health; Strava connect (OAuth; user creates a
@@ -920,9 +920,6 @@ Anime, TV (code + tables). Order: design first, then SAT, then Health.
 
 ## Blocked / needs the user
 
-- **046 (UcatLessonDone)** is additive; Claude applies it through the Supabase connector with the
-  deploy. If that failed, paste `prisma/manual-migrations/046-ucat-lessons.sql` into the SQL Editor —
-  until then the lessons open but "Mark this lesson done" says it waits for the table.
 - **Run `045-drop-library.sql`** in the Supabase SQL Editor (the Library is gone from the code;
   the tables are just unused). Destructive; harmless if never run.
 - **Optional:** `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` in Vercel were only for cover uploads
