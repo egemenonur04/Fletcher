@@ -893,6 +893,11 @@ Anime, TV (code + tables). Order: design first, then SAT, then Health.
 
 ## Blocked / needs the user
 
+- **Run `041-drop-books-anime-tv-wardrobe.sql`** on the new Supabase (the deploy removing those
+  sections is live on main, 2f99e51; all ten tables were checked empty 2026-10-28). Claude tried via
+  the Supabase connector; it asks the user to confirm destructive SQL and nobody answered in time.
+  Retry when the user is watching, or paste the file into the SQL Editor. Harmless if never run.
+
 - **New copy of the site (user, 2026-10-27)** — fresh Vercel project `fletcher`
   (prj_OfZXoASbku2JX5WnZaQqZMsd05J9, account egemenonur04) and Supabase project
   `cpakqaewgjowzyayqctd`, both connected to Claude as connectors. Not the old live site.
