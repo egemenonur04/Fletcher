@@ -291,6 +291,15 @@ Anime, TV (code + tables). Order: design first, then SAT, then Health.
       the vocab quick-start removed; APIs, libs, tables kept (nightly routine reads /api/study/review).
       APs → Statistics, CS A, Biology, Chemistry, Calculus BC (043, tested locally twice, ticks kept).
       Checks: typecheck, lint, tests (+12 UCAT), build, Chromium (UCAT log saves, redirects 307).
+- [ ] **3c. Remove Library entirely** (user, 2026-10-28): movies, games, manga, comics, articles —
+      pages, API, components, libs, tests, models (drop migration 045; the user runs destructive SQL
+      in the SQL Editor — Supabase's confirm prompt never reaches them).
+- [ ] **3d. UCAT learning platform** (user, 2026-10-28): Khan-style lessons for VR, DM, QR, SJT under
+      `/study/ucat/<subtest>/<lesson>` — explanations, key terms, worked examples, interactive practice
+      (MCQ, DM yes/no 2/1/0 scoring, SJT rating scales), lesson completion stored (`UcatLessonDone`,
+      046). Source: "Mastering the UCAT" 3rd ed. (2019, user's PDF via Drive) — taught in Claude's own
+      words, original questions, updated to the 2025 format (AR gone; VR 44/22, DM 35/37, QR 36/26,
+      SJT 69/26). The PDF is not committed (copyright).
 - [ ] **4. Health** — Diet/calorie parts become Health; Strava connect (OAuth; user creates a
       Strava API app → client ID/secret in Vercel), runs imported; exercise routine log;
       cumulative health tracking.
