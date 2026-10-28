@@ -64,6 +64,7 @@ declares. Getting this backwards is what broke books and manga once already.
 | `043-ap-courses-2026.sql` | The APs actually taken: removes Physics C (both), World History and Macroeconomics with their units; adds Biology (8 units), Chemistry (9) and Calculus BC (10) with weightings. Statistics and CS A untouched, ticks kept. **Destructive** for the removed courses. Verified locally: re-run is a no-op, a Statistics tick survives. |
 | `044-ucat-scores.sql` | Creates `UcatScore` (practice-test results: date, test, VR/DM/QR 300–900, SJT band), RLS on. Additive — the UCAT page opens without it and says the log waits for it. Verified locally: re-run is a no-op, `migrate diff` empty after. |
 | `045-drop-library.sql` | Drops the Library: `Movie`, `MovieUniverse`, `Game`, `Manga`, the four comic tables, `Article`, and their enums (`Language` too). **Destructive** — run **after** the deploy that removes the Library. Nothing breaks if it is never run. Verified locally: re-run is a no-op, `migrate diff` empty after. |
+| `046-ucat-lessons.sql` | Creates `UcatLessonDone` (one row per finished UCAT lesson, keyed `vr/how-it-works`), RLS on. Additive — the lessons open without it and the done button says it waits for it. Verified locally: re-run is a no-op, `migrate diff` empty after. |
 
 ## How 019 was verified
 

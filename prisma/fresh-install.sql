@@ -407,6 +407,14 @@ CREATE TABLE "UcatScore" (
     CONSTRAINT "UcatScore_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "UcatLessonDone" (
+    "lessonId" TEXT NOT NULL,
+    "completedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "UcatLessonDone_pkey" PRIMARY KEY ("lessonId")
+);
+
 -- CreateIndex
 CREATE INDEX "WaterIntake_date_idx" ON "WaterIntake"("date");
 
@@ -593,3 +601,4 @@ ALTER TABLE "VocabReview" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "GpaLesson" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "SatAttempt" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "UcatScore" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "UcatLessonDone" ENABLE ROW LEVEL SECURITY;

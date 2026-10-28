@@ -68,7 +68,7 @@ script on the phone.
 
 ## Data model
 
-28 models, 8 enums. The shape by area:
+29 models, 8 enums. The shape by area:
 
 **Library** was removed on 2026-10-28 (Books, Anime, TV and the Wardrobe the day before); 041 and
 045 drop its tables.
@@ -181,6 +181,16 @@ as the other half.
 **UCAT** (`/study/ucat`). No question bank: the official UCAT material lives behind its own player
 at practice.ucat.ac.uk with no public feed, so the page links there, lists the four subtests, and
 logs practice-test scores (`UcatScore`, 044; three subtests 300–900, SJT band 1–4; `lib/ucat.ts`).
+
+**UCAT lessons** (`/study/ucat/[subtest]/[lesson]`). A course per subtest — VR 5 lessons, DM 7, QR 6,
+SJT 5 — written in code: `lib/ucat-lessons.ts` holds the types, the registry and the marking
+(drag-and-drop 2/1/0 for five/four/fewer right; SJT full credit for the key, half for one step
+away), `lib/ucat-content/{vr,dm,qr,sjt}.ts` the lessons. A lesson is teaching blocks, key terms,
+worked examples (answer at a click) and practice (answered, then marked). The teaching follows
+*Mastering the UCAT* (2019), retold and updated to the 2025 format; every question is original —
+`scripts/test-ucat.mjs` checks every key points at a real answer. The only stored state is which
+lessons are done (`UcatLessonDone`, 046; `POST /api/study/ucat/lessons` accepts only ids in
+`allLessonIds()`).
 
 ---
 

@@ -295,12 +295,15 @@ Anime, TV (code + tables). Order: design first, then SAT, then Health.
       (Comic Vine, TMDB, MAL, xlsx, covers, reading time, status), tests, image config, models
       (`045-drop-library.sql`, tested twice locally). Portal: Study, Self Care, Finances, Shopping.
       Login now lands on `/`. Checks: typecheck, lint, tests, build.
-- [ ] **3d. UCAT learning platform** (user, 2026-10-28): Khan-style lessons for VR, DM, QR, SJT under
-      `/study/ucat/<subtest>/<lesson>` — explanations, key terms, worked examples, interactive practice
-      (MCQ, DM yes/no 2/1/0 scoring, SJT rating scales), lesson completion stored (`UcatLessonDone`,
-      046). Source: "Mastering the UCAT" 3rd ed. (2019, user's PDF via Drive) — taught in Claude's own
-      words, original questions, updated to the 2025 format (AR gone; VR 44/22, DM 35/37, QR 36/26,
-      SJT 69/26). The PDF is not committed (copyright).
+- [x] **3d. UCAT learning platform** (2026-10-28): `/study/ucat` has a Learn grid → a course per
+      subtest (`/study/ucat/<vr|dm|qr|sjt>`, VR 5 lessons, DM 7, QR 6, SJT 5) → lessons with
+      teaching, key terms, worked examples (answer at a click) and practice marked like the real
+      test (MCQ; DM drag-and-drop 2/1/0; SJT ratings, half credit one step off). Content in
+      `lib/ucat-content/*.ts`, registry and marking in `lib/ucat-lessons.ts`. Source: "Mastering the
+      UCAT" 3rd ed. (2019, user's PDF) — retold in our own words, updated to the 2025 format, all
+      questions original; the PDF is not committed. Done lessons stored in `UcatLessonDone` (046).
+      Checks: typecheck, lint, tests (UCAT 28 assertions incl. every key in range), build, Chromium
+      (marking, done button, 404s, no sideways scroll at 390), fresh-install on an empty DB (29 tables).
 - [ ] **4. Health** — Diet/calorie parts become Health; Strava connect (OAuth; user creates a
       Strava API app → client ID/secret in Vercel), runs imported; exercise routine log;
       cumulative health tracking.
@@ -917,6 +920,9 @@ Anime, TV (code + tables). Order: design first, then SAT, then Health.
 
 ## Blocked / needs the user
 
+- **046 (UcatLessonDone)** is additive; Claude applies it through the Supabase connector with the
+  deploy. If that failed, paste `prisma/manual-migrations/046-ucat-lessons.sql` into the SQL Editor —
+  until then the lessons open but "Mark this lesson done" says it waits for the table.
 - **Run `045-drop-library.sql`** in the Supabase SQL Editor (the Library is gone from the code;
   the tables are just unused). Destructive; harmless if never run.
 - **Optional:** `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` in Vercel were only for cover uploads
