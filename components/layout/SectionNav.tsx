@@ -13,7 +13,7 @@ const isActive = (pathname: string, item: NavItem) =>
   item.exact ? pathname === item.href : pathname.startsWith(item.href);
 
 /**
- * A section's navigation — Library's, Study's. From lg up it is the sidebar down the left. Below lg
+ * A section's navigation — Study's, Self Care's. From lg up it is the sidebar down the left. Below lg
  * (phones, phones turned sideways, iPads in portrait) a sidebar would eat the page, so it gives way
  * to a top bar naming the section and the open page, whose menu button draws the same sidebar in
  * from the left as a drawer over the page.

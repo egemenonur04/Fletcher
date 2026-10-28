@@ -1,12 +1,11 @@
 import Link from "next/link";
-import { BookMarked, HeartPulse, Wallet, GraduationCap, ShoppingBag } from "lucide-react";
+import { HeartPulse, Wallet, GraduationCap, ShoppingBag } from "lucide-react";
 import { APP_TIME_ZONE } from "@/lib/dates";
 
 const SECTIONS = [
   { href: "/study", label: "Study", description: "APs and units, GPA, the SAT Question Bank and vocabulary, UCAT", icon: GraduationCap },
   { href: "/self-care", label: "Self Care", description: "Today's meal plan and water", icon: HeartPulse },
   { href: "/finances", label: "Finances", description: "Monthly budget, expenses and carryover", icon: Wallet },
-  { href: "/library", label: "Library", description: "Manga, games, movies, comics and articles", icon: BookMarked },
   { href: "/shopping", label: "Shopping", description: "Shops you've tried — what was good and what wasn't", icon: ShoppingBag },
 ];
 

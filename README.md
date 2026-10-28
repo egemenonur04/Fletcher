@@ -1,13 +1,12 @@
 # MyPortal
 
-A personal hub, deployed on Vercel and backed by Supabase Postgres. Five sections, one login:
+A personal hub, deployed on Vercel and backed by Supabase Postgres. Four sections, one login:
 
 | Section | What it is |
 |---|---|
-| **Library** | Manga, comics, films, games and articles. Universe hierarchies, progress tracking, derived status, Steam sync. |
 | **Self Care** | Today's meals from the monthly diet plan, ticked off as you eat them, with a water log toward the day's goal — installable on the home screen as "Diet", and usable offline. |
 | **Finances** | Monthly budget, expenses, additional income and carryover, in TRY. Includes an installable mobile expense logger that works offline. |
-| **Study** | AP unit tracker (Statistics, CS A, Biology, Chemistry, Calculus BC), a GPA calculator, College Board's SAT Question Bank solved in a Bluebook-style practice screen with SAT vocabulary, and a UCAT page of official links and a practice-score log. |
+| **Study** | AP unit tracker (Statistics, CS A, Biology, Chemistry, Calculus BC), a GPA calculator, College Board's SAT Question Bank solved in a Bluebook-style practice screen with SAT vocabulary, and UCAT lessons for all four subtests with worked examples and practice, official links and a practice-score log. |
 
 ## Running it
 
@@ -25,14 +24,9 @@ AUTH_SECRET=…                   # signing key for the session cookie
 AUTH_PASSWORD=…                 # the password you log in with
 REPORT_TOKEN=…                  # optional: 32+ random chars; lets the nightly review read /api/study/review
 WIDGET_TOKEN=…                  # optional: 32+ random chars; the phone widgets in scriptable/ (see its README)
-COMICVINE_API_KEY=…             # optional: comicvine.gamespot.com/api — lets Add Comic import a whole run
-TMDB_API_KEY=…                  # optional: themoviedb.org API key or read token — film imports
-MAL_CLIENT_ID=…                 # optional: myanimelist.net/apiconfig Client ID — manga imports
 ```
 
-Optional, per feature: `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` (cover uploads),
-`STEAM_API_KEY` / `STEAM_USER_ID` / `STEAMGRIDDB_API_KEY` (Steam sync),
-`SITE_URL` (the site's address, e.g. `https://example.com` — on Vercel the production domain is
+Optional: `SITE_URL` (the site's address, e.g. `https://example.com` — on Vercel the production domain is
 used when it is unset), `NEXT_PUBLIC_APP_TIMEZONE` (defaults to `Europe/Istanbul` — this is what "today" means for the
 study sessions, and the server runs in a different zone).
 
@@ -41,7 +35,7 @@ study sessions, and the server runs in a different zone).
 ```bash
 npm run typecheck   # tsc --noEmit
 npm run lint        # eslint
-npm test            # status derivation, date maths, XP + level curves, vocabulary
+npm test            # date maths, XP + level curves, vocabulary, SAT bank, UCAT, finances
 npm run build       # the real gate — catches what tsc alone misses
 ```
 

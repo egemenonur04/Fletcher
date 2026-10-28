@@ -291,9 +291,10 @@ Anime, TV (code + tables). Order: design first, then SAT, then Health.
       the vocab quick-start removed; APIs, libs, tables kept (nightly routine reads /api/study/review).
       APs → Statistics, CS A, Biology, Chemistry, Calculus BC (043, tested locally twice, ticks kept).
       Checks: typecheck, lint, tests (+12 UCAT), build, Chromium (UCAT log saves, redirects 307).
-- [ ] **3c. Remove Library entirely** (user, 2026-10-28): movies, games, manga, comics, articles —
-      pages, API, components, libs, tests, models (drop migration 045; the user runs destructive SQL
-      in the SQL Editor — Supabase's confirm prompt never reaches them).
+- [x] **3c. Remove Library entirely** (2026-10-28): pages, API (incl. upload), components, libs
+      (Comic Vine, TMDB, MAL, xlsx, covers, reading time, status), tests, image config, models
+      (`045-drop-library.sql`, tested twice locally). Portal: Study, Self Care, Finances, Shopping.
+      Login now lands on `/`. Checks: typecheck, lint, tests, build.
 - [ ] **3d. UCAT learning platform** (user, 2026-10-28): Khan-style lessons for VR, DM, QR, SJT under
       `/study/ucat/<subtest>/<lesson>` — explanations, key terms, worked examples, interactive practice
       (MCQ, DM yes/no 2/1/0 scoring, SJT rating scales), lesson completion stored (`UcatLessonDone`,
@@ -915,6 +916,11 @@ Anime, TV (code + tables). Order: design first, then SAT, then Health.
       name. Sweep `components/` for buttons and links whose only child is an icon.
 
 ## Blocked / needs the user
+
+- **Run `045-drop-library.sql`** in the Supabase SQL Editor (the Library is gone from the code;
+  the tables are just unused). Destructive; harmless if never run.
+- **Optional:** `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` in Vercel were only for cover uploads
+  and are no longer read; the `covers` storage bucket is unused.
 
 - **Remove the four old AP courses** (2026-10-28). 043's inserts are applied (Biology, Chemistry,
   Calculus BC are live); its DELETE waits on Supabase's destructive-SQL confirmation, which nobody

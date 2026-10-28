@@ -133,7 +133,7 @@ button {
   }
 }
 
-/* The portal's sections and the library's: white sheets that darken their rule on hover. */
+/* Section tiles: white sheets that darken their rule on hover. */
 .theme-tile {
   background-color: var(--color-white);
 }

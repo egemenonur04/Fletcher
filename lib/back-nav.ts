@@ -18,7 +18,6 @@ import { APP_TIME_ZONE } from "@/lib/dates";
 export const BACK_SCROLL_PX = 144;
 export const BACK_OVERFLOW_PX = 144;
 const MAX_TRAIL = 40;
-const ID_SEGMENT = /^[A-Za-z0-9_-]{1,80}$/;
 
 export type Trail = {
   /** In-site paths, oldest first. Search is kept; the hash is not. */
@@ -144,8 +143,7 @@ export function decideBack(trail: Trail, current: string, now: Date = new Date()
 /**
  * The parent the page's own back arrow links to, derived from the path (those arrows are
  * spread across the pages and are not changed here). Section roots go to the portal, which
- * is what "Back to Portal" does. A `new` page opened from a universe keeps that parent,
- * matching the link on that page.
+ * is what "Back to Portal" does.
  */
 export function parentFallback(href: string, now: Date = new Date()): string | null {
   const here = normalizePath(href);
@@ -158,16 +156,8 @@ export function parentFallback(href: string, now: Date = new Date()): string | n
   if (path === "/finances" || /^\/finances\/\d+\/\d+$/.test(path)) return "/";
   if (path === "/finances/log") return financesMonth(now);
 
-  const universeId = idSegment(new URLSearchParams(searchOf(here)).get("universeId"));
-  if (universeId && path === "/library/movies/new") return `/library/movies/u/${universeId}`;
-
   const parts = path.split("/").filter(Boolean);
-  // Movies use `u` as a route marker, not a page. Comics uses real ids in that position, so a
-  // universe whose id is "u" must stay.
-  const hierarchical = parts[0] === "library" && parts[1] === "movies";
-  if (hierarchical && parts.at(-1) === "new" && parts.at(-2) === "u") parts.splice(-2, 2);
-  else parts.pop();
-  if (hierarchical) while (parts.at(-1) === "u") parts.pop();
+  parts.pop();
   if (parts.length === 0) return "/";
   const parent = "/" + parts.join("/");
   return parent === path ? null : parent;
@@ -282,14 +272,4 @@ function financesMonth(now: Date): string {
 function pathnameOf(href: string): string {
   const query = href.indexOf("?");
   return query === -1 ? href : href.slice(0, query);
-}
-
-function searchOf(href: string): string {
-  const query = href.indexOf("?");
-  return query === -1 ? "" : href.slice(query + 1);
-}
-
-function idSegment(value: string | null): string | null {
-  if (!value || !ID_SEGMENT.test(value)) return null;
-  return value;
 }

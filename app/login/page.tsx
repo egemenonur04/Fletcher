@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Library } from "lucide-react";
+import { Newspaper } from "lucide-react";
 import { Suspense } from "react";
 
 function LoginForm() {
@@ -11,7 +11,7 @@ function LoginForm() {
   // Only same-origin relative paths. "//evil.com" and "https://evil.com" are both absolute
   // navigations, so an unvalidated ?from= turns this into a phishing redirect.
   const rawFrom = searchParams.get("from");
-  const from = rawFrom && rawFrom.startsWith("/") && !rawFrom.startsWith("//") ? rawFrom : "/library";
+  const from = rawFrom && rawFrom.startsWith("/") && !rawFrom.startsWith("//") ? rawFrom : "/";
 
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -48,7 +48,7 @@ function LoginForm() {
       <div className="w-full max-w-sm">
         <div className="theme-gate-intro flex flex-col items-center mb-8">
           <div className="theme-gate-mark bg-gray-900 text-white p-3 rounded-xl mb-4">
-            <Library className="w-6 h-6" />
+            <Newspaper className="w-6 h-6" />
           </div>
           <h1 className="text-xl font-bold text-gray-900">My Portal</h1>
           <p className="text-sm text-gray-500 mt-1">Enter your password to continue</p>

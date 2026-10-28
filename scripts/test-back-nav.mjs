@@ -30,47 +30,23 @@ const ORIGIN = "http://localhost:3000";
 
 // ── paths ────────────────────────────────────────────────────────────────────
 
-eq(normalizePath("/library/movies/"), "/library/movies", "a trailing slash is the same page");
-eq(normalizePath("/library/movies?q=dune"), "/library/movies?q=dune", "search is kept");
-eq(normalizePath("/library/movies#notes"), "/library/movies", "the hash is not a different page");
+eq(normalizePath("/study/sat/"), "/study/sat", "a trailing slash is the same page");
+eq(normalizePath("/study/sat?q=dune"), "/study/sat?q=dune", "search is kept");
+eq(normalizePath("/study/sat#notes"), "/study/sat", "the hash is not a different page");
 eq(normalizePath("//evil.com"), null, "a protocol-relative URL is not in-site");
-eq(normalizePath("https://evil.com/library"), null, "an absolute URL is not in-site");
-eq(normalizePath("http://portal.local/library"), null, "a full URL string is not accepted as a path");
-eq(normalizePath("/library/movies/../../shopping"), "/shopping", "dot segments resolve before the path is stored");
+eq(normalizePath("https://evil.com/study"), null, "an absolute URL is not in-site");
+eq(normalizePath("http://portal.local/study"), null, "a full URL string is not accepted as a path");
+eq(normalizePath("/study/sat/../../shopping"), "/shopping", "dot segments resolve before the path is stored");
 ok(!normalizePath(""), "empty is not a path");
-eq(referrerPath("http://localhost:3000/library/movies/", ORIGIN), "/library/movies", "a same-origin referrer");
+eq(referrerPath("http://localhost:3000/study/sat/", ORIGIN), "/study/sat", "a same-origin referrer");
 eq(referrerPath("https://google.com/search?q=x", ORIGIN), null, "another site is not a back target");
 eq(referrerPath("http://localhost:3000//evil.com", ORIGIN), null, "a same-origin URL that is not a path");
-ok(sameDestination("/library/movies/", "/library/movies"), "trailing slash matches");
-ok(!sameDestination("/library/movies", "/library/movies?q=1"), "a different search is a different page");
+ok(sameDestination("/study/sat/", "/study/sat"), "trailing slash matches");
+ok(!sameDestination("/study/sat", "/study/sat?q=1"), "a different search is a different page");
 
 // ── the parent each page's own arrow uses ───────────────────────────────────
 
 const parents = [
-  ["/library/movies/abc", "/library/movies"],
-  ["/library/movies/abc/edit", "/library/movies/abc"],
-  ["/library/movies/new", "/library/movies"],
-  ["/library/movies/new?universeId=uni_1", "/library/movies/u/uni_1"],
-  ["/library/movies/new?universeId=../x", "/library/movies"],
-  ["/library/movies/new?universeId=https://evil.com", "/library/movies"],
-  ["/library/movies/new?universeId=uni/1", "/library/movies"],
-  ["/library/movies/u/uni_1", "/library/movies"],
-  ["/library/movies/u/uni_1/edit", "/library/movies/u/uni_1"],
-  ["/library/movies/u/uni_1/new", "/library/movies/u/uni_1"],
-  ["/library/movies/u/new", "/library/movies"],
-  ["/library/comics/p/u/t/i", "/library/comics/p/u/t"],
-  ["/library/comics/p/u/t/i/edit", "/library/comics/p/u/t/i"],
-  ["/library/comics/p/u/t/new", "/library/comics/p/u/t"],
-  ["/library/comics/p/u/new", "/library/comics/p/u"],
-  ["/library/comics/p/s/new", "/library/comics/p/s"],
-  ["/library/comics/p/new", "/library/comics/p"],
-  ["/library/comics/new", "/library/comics"],
-  ["/library/manga/m1", "/library/manga"],
-  ["/library/manga/m1/edit", "/library/manga/m1"],
-  ["/library/manga/import", "/library/manga"],
-  ["/library/games/g1", "/library/games"],
-  ["/library/games/new", "/library/games"],
-  ["/library/articles/a1", "/library/articles"],
   ["/shopping/shop1", "/shopping"],
   ["/shopping/shop1/edit", "/shopping/shop1"],
   ["/shopping/new", "/shopping"],
@@ -85,7 +61,6 @@ const parents = [
   ["/study/ap", "/study"],
   ["/study/ucat", "/study"],
   ["/study", "/"],
-  ["/library", "/"],
   ["/finances/2026/10", "/"],
   ["/finances", "/"],
   ["/", null],
@@ -99,36 +74,36 @@ eq(parentFallback("/finances/log", NOW), "/finances/2026/10", "the logger's arro
 eq(parentFallback("/finances/log", MONTH_EDGE), "/finances/2026/11", "the month is Istanbul's, not UTC's");
 
 // A direct open uses the parent, never history, and never the external site it came from.
-let trail = restoreTrail(null, "/library/movies/abc", "https://google.com/", ORIGIN);
-eq(trail, { entries: ["/library/movies/abc"], index: 0, depth: 0 }, "an external referrer starts a fresh trail");
-eq(decideBack(trail, "/library/movies/abc", NOW), { type: "href", href: "/library/movies" }, "direct open falls back to the section");
+let trail = restoreTrail(null, "/study/sat/vocab", "https://google.com/", ORIGIN);
+eq(trail, { entries: ["/study/sat/vocab"], index: 0, depth: 0 }, "an external referrer starts a fresh trail");
+eq(decideBack(trail, "/study/sat/vocab", NOW), { type: "href", href: "/study/sat" }, "direct open falls back to the section");
 
 // Climbing keeps climbing. The second press must not return to the page just left.
-trail = applyNavigation(trail, "/library/movies", "fallback");
-eq(decideBack(trail, "/library/movies", NOW), { type: "href", href: "/library" }, "the next press climbs to the library");
-trail = applyNavigation(trail, "/library", "fallback");
-eq(decideBack(trail, "/library", NOW), { type: "href", href: "/" }, "the library climbs to the portal");
+trail = applyNavigation(trail, "/study/sat", "fallback");
+eq(decideBack(trail, "/study/sat", NOW), { type: "href", href: "/study" }, "the next press climbs to Study");
+trail = applyNavigation(trail, "/study", "fallback");
+eq(decideBack(trail, "/study", NOW), { type: "href", href: "/" }, "Study climbs to the portal");
 trail = applyNavigation(trail, "/", "fallback");
 eq(decideBack(trail, "/", NOW), { type: "none" }, "the portal has nowhere further to go");
 
 // In-site history wins over the parent, and a refresh keeps it.
 trail = restoreTrail(null, "/", null, ORIGIN);
-trail = applyNavigation(trail, "/library", "push");
-trail = applyNavigation(trail, "/library/movies", "push");
-trail = applyNavigation(trail, "/library/movies/abc", "push");
+trail = applyNavigation(trail, "/study", "push");
+trail = applyNavigation(trail, "/study/sat", "push");
+trail = applyNavigation(trail, "/study/sat/vocab", "push");
 eq(trail.depth, 3, "three in-site steps");
-eq(decideBack(trail, "/library/movies/abc", NOW), { type: "history" }, "arrived from the movies list, so step back");
-const refreshed = restoreTrail(trail, "/library/movies/abc", "https://google.com/", ORIGIN);
+eq(decideBack(trail, "/study/sat/vocab", NOW), { type: "history" }, "arrived from the question bank, so step back");
+const refreshed = restoreTrail(trail, "/study/sat/vocab", "https://google.com/", ORIGIN);
 eq(refreshed, trail, "a refresh keeps the trail even when the referrer is external");
-eq(decideBack(refreshed, "/library/movies/abc", NOW), { type: "history" }, "after a refresh the previous page is still in history");
+eq(decideBack(refreshed, "/study/sat/vocab", NOW), { type: "history" }, "after a refresh the previous page is still in history");
 
 // A filter replaces the entry. Back still goes to the page before the list, once.
-trail = applyNavigation(trail, "/library/movies", "pop");
-trail = applyNavigation(trail, "/library/movies?q=dune", "replace");
-eq(trail.entries, ["/", "/library", "/library/movies?q=dune", "/library/movies/abc"], "replace edits the current page and leaves the forward one");
+trail = applyNavigation(trail, "/study/sat", "pop");
+trail = applyNavigation(trail, "/study/sat?q=dune", "replace");
+eq(trail.entries, ["/", "/study", "/study/sat?q=dune", "/study/sat/vocab"], "replace edits the current page and leaves the forward one");
 eq(trail.index, 2, "the filtered list is the current page");
 eq(trail.depth, 2, "replace does not add a history step");
-eq(decideBack(trail, "/library/movies?q=dune", NOW), { type: "history" }, "back from a filtered list is one step");
+eq(decideBack(trail, "/study/sat?q=dune", NOW), { type: "history" }, "back from a filtered list is one step");
 
 // Review dates are real visits: back returns to the day you came from, not to Study.
 trail = restoreTrail(null, "/study", null, ORIGIN);
@@ -153,29 +128,29 @@ trail = applyNavigation(trail, "/study/sat", "push");
 eq(decideBack(trail, "/study/sat", NOW), { type: "href", href: "/" }, "skip /sat, it redirects back here");
 
 // Login bounces a signed-out session straight back. Don't offer it.
-trail = applyNavigation(restoreTrail(null, "/library", null, ORIGIN), "/login", "push");
+trail = applyNavigation(restoreTrail(null, "/study", null, ORIGIN), "/login", "push");
 eq(decideBack(trail, "/login", NOW), { type: "none" }, "login is not a back target");
 
 // Depth zero means the browser's previous entry is not one of ours, even if a stale trail says so.
-trail = { entries: ["/", "/library/movies/abc"], index: 1, depth: 0 };
-eq(decideBack(trail, "/library/movies/abc", NOW), { type: "href", href: "/library/movies" }, "no in-site history steps uses the parent");
+trail = { entries: ["/", "/study/sat/vocab"], index: 1, depth: 0 };
+eq(decideBack(trail, "/study/sat/vocab", NOW), { type: "href", href: "/study/sat" }, "no in-site history steps uses the parent");
 
 // A full navigation that continues from the page this tab already had open.
-const stored = { entries: ["/", "/library/movies"], index: 1, depth: 1 };
-trail = restoreTrail(stored, "/library/movies/abc", "http://localhost:3000/library/movies", ORIGIN);
-eq(trail.entries, ["/", "/library/movies", "/library/movies/abc"], "a same-site referrer continues the trail");
+const stored = { entries: ["/", "/study/sat"], index: 1, depth: 1 };
+trail = restoreTrail(stored, "/study/sat/vocab", "http://localhost:3000/study/sat", ORIGIN);
+eq(trail.entries, ["/", "/study/sat", "/study/sat/vocab"], "a same-site referrer continues the trail");
 eq(trail.depth, 2, "that full load is one more in-site step");
 
 // The same load from another site drops the stale trail.
-trail = restoreTrail(stored, "/library/movies/abc", "https://google.com/", ORIGIN);
-eq(trail, { entries: ["/library/movies/abc"], index: 0, depth: 0 }, "external referrer drops a trail for a different page");
+trail = restoreTrail(stored, "/study/sat/vocab", "https://google.com/", ORIGIN);
+eq(trail, { entries: ["/study/sat/vocab"], index: 0, depth: 0 }, "external referrer drops a trail for a different page");
 
 // Pop back, then forward, then somewhere unknown.
-trail = { entries: ["/", "/library", "/library/movies"], index: 2, depth: 2 };
-trail = applyNavigation(trail, "/library", "pop");
-eq(trail, { entries: ["/", "/library", "/library/movies"], index: 1, depth: 1 }, "back lands on the library and keeps the forward page");
-trail = applyNavigation(trail, "/library/movies", "pop");
-eq(trail.index, 2, "forward returns to the movies list");
+trail = { entries: ["/", "/study", "/study/sat"], index: 2, depth: 2 };
+trail = applyNavigation(trail, "/study", "pop");
+eq(trail, { entries: ["/", "/study", "/study/sat"], index: 1, depth: 1 }, "back lands on Study and keeps the forward page");
+trail = applyNavigation(trail, "/study/sat", "pop");
+eq(trail.index, 2, "forward returns to the question bank");
 eq(trail.depth, 2, "forward restores the in-site depth");
 trail = applyNavigation(trail, "/shopping", "pop");
 eq(trail, { entries: ["/shopping"], index: 0, depth: 0 }, "a page the trail doesn't know starts fresh");
@@ -183,16 +158,16 @@ eq(trail, { entries: ["/shopping"], index: 0, depth: 0 }, "a page the trail does
 // A stored trail that has been tampered with.
 eq(parseTrail("{"), null, "broken JSON is ignored");
 eq(parseTrail(JSON.stringify({ entries: ["https://evil.com"], index: 0, depth: 1 })), null, "an external entry is rejected");
-eq(parseTrail(JSON.stringify({ entries: ["/library"], index: 0, depth: 9 })), { entries: ["/library"], index: 0, depth: 0 }, "depth can't outrun the pages behind this one");
+eq(parseTrail(JSON.stringify({ entries: ["/study"], index: 0, depth: 9 })), { entries: ["/study"], index: 0, depth: 0 }, "depth can't outrun the pages behind this one");
 eq(parseTrail(null), null, "no stored trail");
 
 // The trail doesn't grow without bound. Depth stays inside what was kept.
 trail = restoreTrail(null, "/", null, ORIGIN);
-for (let i = 0; i < 50; i++) trail = applyNavigation(trail, `/library/movies?n=${i}`, "push");
+for (let i = 0; i < 50; i++) trail = applyNavigation(trail, `/study/sat?n=${i}`, "push");
 ok(trail.entries.length <= 40, "the trail keeps at most 40 pages");
 ok(trail.depth <= trail.index, "depth stays within the pages still recorded");
-eq(trail.entries[trail.index], "/library/movies?n=49", "the newest page is current");
-eq(decideBack(trail, "/library/movies?n=49", NOW).type, "history", "a long session still steps back one page");
+eq(trail.entries[trail.index], "/study/sat?n=49", "the newest page is current");
+eq(decideBack(trail, "/study/sat?n=49", NOW).type, "history", "a long session still steps back one page");
 
 // ── when the button is on screen ────────────────────────────────────────────
 

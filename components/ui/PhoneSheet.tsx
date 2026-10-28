@@ -25,7 +25,7 @@ const FOCUSABLE =
  * for sm up and hide it on phones (`max-sm:hidden`).
  *
  * While open: focus starts on the first control, Tab stays in the sheet, Escape dismisses it, and
- * the page behind it does not scroll — the same contract as the Library/Study menu drawer.
+ * the page behind it does not scroll — the same contract as the Study menu drawer.
  */
 export default function PhoneSheet({ label, onDismiss, children }: Props) {
   const panel = useRef<HTMLDivElement>(null);

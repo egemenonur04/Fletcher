@@ -1,6 +1,6 @@
 # MyPortal — architecture
 
-A personal hub: **Library**, **Self Care** (diet), **Finances**, **Study** (APs, GPA, SAT, UCAT) and **Shopping**, behind one
+A personal hub: **Self Care** (diet), **Finances**, **Study** (APs, GPA, SAT, UCAT) and **Shopping**, behind one
 password. Next.js App Router on Vercel, Prisma against Supabase Postgres, Tailwind.
 
 This file covers how the pieces fit and the conventions that hold across them. For what is done
@@ -68,76 +68,10 @@ script on the phone.
 
 ## Data model
 
-36 models, 22 enums. The shape by area:
+28 models, 8 enums. The shape by area:
 
-**Library.** Each medium has a status derived from progress counts, never set by hand
-(`lib/derive-status.ts`). Two media have parent hierarchies with `SET NULL` foreign keys, so
-deleting a parent orphans children rather than destroying them:
-
-- Films — `MovieUniverse → Movie` (no series tier)
-- Comics — `ComicPublisher → ComicUniverse → ComicTitle → ComicIssue`, the one hierarchy where
-  the leaf is an issue rather than the work itself
-
-Standalone: `Manga`, `Game`, `Article`. (Books, Anime, TV and the Wardrobe were removed on
-2026-10-27; migration 041 drops their tables.)
-
-**Comics from Comic Vine.** "Add Comic" searches Comic Vine and imports a whole run: the comic, named
-with its start year ("The Amazing Spider-Man (1963)" — Marvel reuses titles), and every issue with its
-name and cover. `ComicTitle.comicVineId` remembers the run, unique per universe, so importing it again
-— "Check for new issues" on the comic's page — only adds what is missing. The merge rule is in
-`planMerge`: an import creates missing issues and fills a blank name or cover, and never writes
-read, owned, rating, rereads, notes or anything you set yourself. Issue numbers arrive as strings;
-"½", "-1" and "1.5" are placed, "1.MU" and collisions like "1.1"/"1.10" are reported, not guessed.
-Covers are hotlinked and rendered `unoptimized`, and excluded from cover mirroring. The key,
-`COMICVINE_API_KEY`, is server-only. (marvelreading.com was the first choice; it blocks automated
-access with a Cloudflare challenge and its robots.txt disallows ClaudeBot, so it is not used.)
-
-**Movies from TMDB.** "Add Movie" searches TMDB for films, collections ("Harry Potter Collection")
-and keyword tags ("marvel cinematic universe (mcu)" — the MCU has no TMDB collection). A film is
-added in one tap; a collection or tag opens a preview with checkboxes, listed in release order, and
-imports the ticked films — up to 100, six detail requests at a time. Each arrives with director(s),
-lead studio, runtime, year, original language and poster. `Movie.tmdbId` is unique (a film is in the
-library once, in at most one universe); `imdbId` is kept only to link to IMDb. The merge rule is
-`planImport`: match by TMDB id, else once by title + year to a film added by hand (which is then
-linked); fill blanks only — never title, status, rating, rewatches, notes or language; a standalone
-film moves into the universe being imported into, a film in another universe stays and is reported.
-Runtime 0 means "not known yet" (a film imported before release); importing it again fills it.
-New rows are stamped a millisecond apart so a universe page (year, then `createdAt`) keeps release
-order within a year. Posters are hotlinked from image.tmdb.org, rendered `unoptimized`, and excluded
-from cover mirroring — TMDB's terms limit how long its content may be kept. TMDB requires its
-attribution notice and logo wherever its data is used (`TMDB_NOTICE`, `public/tmdb-logo.svg`). The key,
-`TMDB_API_KEY` (a v3 key or a v4 read token — both work), is server-only. Cards carry a one-tap
-Watched toggle. (IMDb was the first choice; its Conditions of Use forbid robots and scraping without
-written consent and it has no public API, so it is not used.)
-
-**Manga from MyAnimeList.** The official MAL API, with `MAL_CLIENT_ID` (`/manga?q=`, `/manga/{id}` with
-`authors{first_name,last_name}`). On MAL a manga is one entry for the whole series, so there is no
-run to walk: one entry, one row, linked by `Manga.malId` (unique, 032). "Add Manga" searches MAL
-first (`MangaMalImport`): format from `media_type` (manhwa/manhua, else manga); author from the
-Story / Story & Art credits, artist from Art when it is someone else ("Unknown" if nobody is
-credited — the column is required); MAL's 0 volumes/chapters = unknown; publishing, on hiatus or
-not yet published = `ongoing`. Publisher isn't filled (MAL gives the magazine, not the publisher).
-Options: To read / Read (finished series only — counts set to the totals, status derived as
-usual), Japanese / English title, and the reading language (starts on the library's most common
-one). Light novels and novels are listed but not imported. `matchExisting`:
-MAL id, else an unlinked row whose normalised title equals any of the entry's titles → that row is
-linked instead of a duplicate; a unique-index clash from a concurrent import reads as "already".
-A hand-added manga's page has "Find on MyAnimeList" (links that row whatever its title); a linked
-one has "Check MyAnimeList" (`refreshManga`). Linking and checking only fill blanks and grow counts
-(`updatesFromManga`) — title, progress, rating, notes, language and publisher are never touched;
-status is re-derived so a series that just ended can complete. Covers hotlinked and excluded from
-manga mirroring.
-
-**Importing a whole manga list** (`/library/manga/import`, "Import list" on the Manga page). Sources:
-a public user's Completed manga list (`/users/{name}/mangalist`), MAL's manga export, or an .xlsx copy
-of the list page — each title cell links to `/manga/{id}`, read by `sheetLinks` (or the cover's address
-as text), so lines carry their id; a link-less line is matched by exact title (`pickManga`) at import. `lib/mal-manga-list.ts`: novels
-and on hold/dropped/planned are left out. A list page copy may be the Completed tab or "All
-Manga" (no Type column; "read / total" in Chapters marks one being read, a bare count one finished).
-One manga per line, each through the ordinary `/api/manga/mal/import` — finished as read, reading
-with `progress` (chapters/volumes, capped at the series' totals); already-linked ones start unticked (`/api/manga/mal/places`, database
-only). Requests go through `lib/fetch-retry.ts`: up to 5 tries with
-5–45 s pauses on 429/5xx/connection loss; whatever still fails is offered again from the result.
+**Library** was removed on 2026-10-28 (Books, Anime, TV and the Wardrobe the day before); 041 and
+045 drop its tables.
 
 **Finances.** `FinanceConfig` (budget), `Expense`, `AdditionalIncome`, `Subscription`. Expenses
 carry a unique `clientId` so the offline logger can retry without duplicating — a client-side
@@ -271,8 +205,7 @@ The rules are in `docs/design/paper.md`.
 
 ```
 app/
-  (portal)          app/page.tsx — the four section cards
-  library/…         five media types, each list / detail / edit / new
+  (portal)          app/page.tsx — the section cards under a masthead
   self-care/…       the day's meals from the diet plan (/self-care, installable as "Diet", works offline)
   finances/…        month view, plus /log (installable PWA)
   study/…           APs, GPA, SAT (question bank, practice screen, vocabulary), UCAT
@@ -294,15 +227,8 @@ scriptable/             the phone widgets (Diet, Water) for the Scriptable app, 
 | `db.ts` | The Prisma singleton and its connection guard |
 | `session.ts` | HMAC session tokens, shared by middleware and route handlers |
 | `api-errors.ts` | `withErrors`, `readJson` |
-| `derive-status.ts` | Progress counts → status, for every medium |
 | `dates.ts` | Date keys and the app timezone |
 | `study.ts` / `study-service.ts` | Session and XP rules (client-safe) / Prisma side |
-| `comicvine.ts` / `comicvine-service.ts` / `comicvine-import.ts` | Issue numbers, covers and the merge rule / the API client / landing a run in a universe |
-| `tmdb.ts` / `tmdb-service.ts` / `tmdb-import.ts` | Reading TMDB's answers and the merge rule / the API client / landing films in the library |
-| `mal.ts` / `mal-service.ts` | MAL's image CDN / the MAL API client (manga search, entries, a user's list) |
-| `xlsx-lite.ts` | Reading an .xlsx (cells and hyperlinks) without a dependency |
-| `mal-manga-list.ts` / `fetch-retry.ts` | Whole manga list import: reading list files and ids, what is left out / the retrying fetch the list import uses |
-| `mal-manga.ts` / `mal-manga-import.ts` | Manga: reading MAL entries, format/credits/ongoing and the fill-blanks rules / landing, linking and checking one in the database |
 | `goals.ts` / `goal-schema.ts` | Weekly-goal arithmetic and its wording / the zod rule both goal routes share |
 | `review.ts` / `review-service.ts` | The daily review's rules — day boundaries, streaks, level-ups / its queries |
 | `leveling.ts` | The XP curve: `level = floor(k · ln(1 + xp/30k))`, k = 10 |
@@ -321,9 +247,9 @@ scriptable/             the phone widgets (Diet, Water) for the Scriptable app, 
 
 ## Testing
 
-`npm test` runs plain node scripts over the pure modules — status derivation, date maths, the
-XP rule, the level curve, the vocabulary parser and question builder, the daily review, the
-report token, the Comic Vine, TMDB (film) and MyAnimeList (manga) merge rules, the shopping
+`npm test` runs plain node scripts over the pure modules — date maths, the XP rule, the level
+curve, the vocabulary parser and question builder, the daily review, the report token, the SAT
+Question Bank reader and marking, UCAT scores and lessons, the shopping
 rules (addresses, categories, line codes), the finance pots (carryover per source, balances), installment splits, and the meal plans' sums. `scripts/alias.mjs` teaches node the `@/` import alias, so a pure module can
 import another the same way the app does. There is no browser test suite; UI and schema changes are verified by running the app
 against a throwaway Postgres and driving it, because the bugs that mattered here were only
