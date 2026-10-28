@@ -38,3 +38,19 @@ export async function deleteUcatScore(id: string): Promise<boolean> {
     throw e;
   }
 }
+
+/** The ids of the finished lessons. Null until migration 046 has run. */
+export async function listDoneLessons(): Promise<string[] | null> {
+  try {
+    const rows = await db.ucatLessonDone.findMany({ select: { lessonId: true } });
+    return rows.map((r) => r.lessonId);
+  } catch (e) {
+    if (isMissingTable(e)) return null;
+    throw e;
+  }
+}
+
+export async function setLessonDone(lessonId: string, done: boolean): Promise<void> {
+  if (done) await db.ucatLessonDone.upsert({ where: { lessonId }, create: { lessonId }, update: {} });
+  else await db.ucatLessonDone.deleteMany({ where: { lessonId } });
+}

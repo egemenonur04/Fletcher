@@ -1,9 +1,11 @@
 export const dynamic = "force-dynamic";
 
+import Link from "next/link";
 import { ExternalLink } from "lucide-react";
 import UcatLog from "@/components/study/UcatLog";
 import { SUBTESTS, UCAT_NOT_READY } from "@/lib/ucat";
-import { listUcatScores } from "@/lib/ucat-service";
+import { COURSES, SUBTEST_ORDER, lessonId } from "@/lib/ucat-lessons";
+import { listDoneLessons, listUcatScores } from "@/lib/ucat-service";
 
 // The UCAT's question banks and practice tests live on the official site, behind its own player;
 // they have no public feed to draw questions from. So this page links to them and keeps the scores.
@@ -13,17 +15,37 @@ const LINKS = [
 ];
 
 export default async function UcatPage() {
-  const scores = await listUcatScores();
+  const [scores, doneIds] = await Promise.all([listUcatScores(), listDoneLessons()]);
+  const done = new Set(doneIds ?? []);
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div>
         <h2 className="text-2xl font-bold text-gray-900">UCAT</h2>
         <p className="text-sm text-gray-500 mt-0.5">
-          The University Clinical Aptitude Test, for UK medicine and dentistry. Practise on the official
-          material, then log your scores here.
+          The University Clinical Aptitude Test, for UK medicine and dentistry. Learn each subtest here,
+          practise on the official material, then log your scores.
         </p>
       </div>
+
+      <section>
+        <h3 className="text-lg text-gray-900 border-b border-gray-900 pb-2">Learn</h3>
+        <div className="grid sm:grid-cols-2 border-l border-gray-200">
+          {SUBTEST_ORDER.map((key) => {
+            const c = COURSES[key];
+            const finished = c.lessons.filter((l) => done.has(lessonId(key, l.slug))).length;
+            return (
+              <Link key={key} href={`/study/ucat/${key}`} className="group block border-r border-b border-gray-200 p-4 hover:bg-white">
+                <span className="block text-lg font-bold text-gray-900 group-hover:underline underline-offset-4 decoration-1">{c.name}</span>
+                <span className="block text-sm text-gray-600 mt-1 line-clamp-2">{c.intro}</span>
+                <span className="block text-xs text-gray-500 mt-2">
+                  {c.lessons.length} lessons{doneIds === null ? "" : ` · ${finished} done`}
+                </span>
+              </Link>
+            );
+          })}
+        </div>
+      </section>
 
       <ul className="border-t border-gray-900 divide-y divide-gray-200">
         {LINKS.map((l) => (

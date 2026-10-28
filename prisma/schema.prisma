@@ -562,3 +562,10 @@ model UcatScore {
 
   @@index([takenOn])
 }
+
+/// A UCAT lesson the owner has finished. lessonId is "vr/how-it-works" — the lessons themselves are
+/// code, in lib/ucat-content.
+model UcatLessonDone {
+  lessonId    String   @id
+  completedAt DateTime @default(now())
+}
