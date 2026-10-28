@@ -828,3 +828,22 @@ model SatAttempt {
   @@index([questionId])
   @@index([createdAt])
 }
+
+/// A UCAT practice-test result, typed in by hand. The tests themselves are on the official UCAT
+/// site; only the scores are kept here.
+model UcatScore {
+  id        String   @id @default(cuid())
+  takenOn   DateTime @db.Date
+  /// Which practice test: "Official Practice Test A", a question bank set…
+  source    String
+  /// Verbal Reasoning, Decision Making, Quantitative Reasoning: 300–900, null when not taken.
+  vr        Int?
+  dm        Int?
+  qr        Int?
+  /// Situational Judgement band, 1 (best) to 4.
+  sjt       Int?
+  notes     String?
+  createdAt DateTime @default(now())
+
+  @@index([takenOn])
+}

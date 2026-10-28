@@ -21,7 +21,7 @@ export default function BankFilters({ section, domains, skills, value }: {
     if (patch.domain !== undefined && patch.domain !== value.domain) next.skill = "";
     const q = new URLSearchParams({ section, ...next });
     for (const [k, v] of [...q.entries()]) if (!v) q.delete(k);
-    router.push(`/sat?${q.toString()}`);
+    router.push(`/study/sat?${q.toString()}`);
   };
 
   return (

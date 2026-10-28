@@ -125,7 +125,7 @@ export function decideBack(trail: Trail, current: string, now: Date = new Date()
   if (!here || pathnameOf(here) === "/login") return { type: "none" };
 
   // The browser's previous entry is the trail's previous entry only while `depth` says so.
-  // A redirecting entry (`/finances`, an old `/study/sat-vocab` path) is skipped: stepping onto it
+  // A redirecting entry (`/finances`, an old `/sat` or `/study/sat-vocab` path) is skipped: stepping onto it
   // sends the user straight back here.
   if (trail.depth >= 1 && trail.index >= 1) {
     const prev = trail.entries[trail.index - 1];
@@ -262,6 +262,7 @@ function usableDestination(href: string, here: string): boolean {
   if (sameDestination(href, here)) return false;
   const path = pathnameOf(href);
   if (path === "/login" || path === "/finances") return false;
+  if (path === "/sat" || path.startsWith("/sat/")) return false;
   if (path === "/study/sat-vocab" || path.startsWith("/study/sat-vocab/")) return false;
   return true;
 }

@@ -194,7 +194,7 @@ export default function BluebookPractice({ questions, missing }: { questions: Sa
               <ToolButton icon={Ruler} label="Reference" active={tool === "reference"} onClick={() => setTool(tool === "reference" ? null : "reference")} />
             </>
           )}
-          <Link href="/sat" className="flex flex-col items-center px-2 py-1 text-xs font-semibold text-gray-700 hover:text-gray-900 font-ui">
+          <Link href="/study/sat" className="flex flex-col items-center px-2 py-1 text-xs font-semibold text-gray-700 hover:text-gray-900 font-ui">
             <MoreVertical className="w-5 h-5" />
             Exit
           </Link>
@@ -532,7 +532,7 @@ function Results({ questions, answers, spent, saved, reviewing, onReview }: {
           ))}
         </ul>
         <div className="mt-8 flex gap-3">
-          <Link href="/sat" className="bg-gray-900 text-white px-4 py-2 rounded-md text-sm font-semibold font-ui">Back to the Question Bank</Link>
+          <Link href="/study/sat" className="bg-gray-900 text-white px-4 py-2 rounded-md text-sm font-semibold font-ui">Back to the Question Bank</Link>
         </div>
       </div>
     </div>

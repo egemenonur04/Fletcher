@@ -1,6 +1,6 @@
 # MyPortal — architecture
 
-A personal hub: **Library**, **Self Care** (diet), **Finances**, **Study** and **Shopping**, behind one
+A personal hub: **Library**, **Self Care** (diet), **Finances**, **Study** (APs, GPA, SAT, UCAT) and **Shopping**, behind one
 password. Next.js App Router on Vercel, Prisma against Supabase Postgres, Tailwind.
 
 This file covers how the pieces fit and the conventions that hold across them. For what is done
@@ -193,42 +193,11 @@ map. Product writes go through `/api/shopping/[id]/products/[productId]` and are
 (`where: { id, shopId }`), so a product can't be changed through another shop's address. Saving a
 new or edited shop lands on its page.
 
-**Study sessions.** A `Module` is a thing you study: a title and the one-to-three `Stat`s it
-trains. It has no hours and no place in a day — you pick one when you start a `StudySession`, and
-stopping pays `XpAward` rows of one XP per whole minute to each of those stats. A session started
-without a module rolls three stats at random instead, for one-off work not worth naming.
-
-A session **snapshots** both the stats it pays and the module's title, rather than reading them
-back through the relation. That is what makes the history stable: re-pointing a module's stats
-cannot rewrite what past sessions earned, and deleting a module (`SetNull`) leaves its sessions
-readable by name instead of silently turning them into free ones.
-
-**Weekly goals.** `Module.weeklyGoalMinutes` is a per-module target and `StudyConfig` (one row,
-id `global`, like `FinanceConfig`) holds the overall one; both nullable, both in minutes so 7.5h
-is exact. Progress is not stored — it is this week's session time, Monday to Sunday in Istanbul,
-with a running session added live. Free study counts toward the overall goal only. The per-day
-figure counts today as a day left and rounds up, so it never asks for less than what remains.
-
-`ApCourse`/`ApUnit` hold the College Board unit lists; ticking a unit sets `completedAt`.
-
-**Planner.** `/study/tasks` is a list of study tasks (`StudyTask`), separate from sessions: a
-session is time you spent, a task is work that is due. A subject is the course and a category is
-the kind of work (Homework, Exam Preparation, …); the seven categories are seeded by migration
-039 while the table is empty. A task may have no due date. Dates are Istanbul keys on a Postgres
-`date`; a due time is `HH:MM` and only exists with a date. Overdue means still open and the
-deadline has passed — a bare date lasts the whole day, a time passes at that minute. Completing
-a task stamps `completedAt` once; leaving Completed clears it. Steps (`StudySubtask`) are deleted
-with the task; deleting a subject or category unfiles the task (`SET NULL`) rather than deleting
-it. The rules (views, filters, sort, progress, what a save may say) are pure in `lib/study-tasks.ts`.
-The Study page shows how many are due today once 039 has run, and nothing about it before that.
-
-**Daily review.** `/study/review` (and the same thing as JSON at `/api/study/review`) adds up one
-day: time per module, XP and level-ups per stat, the study streak, AP units ticked and SAT
-questions answered. It has no table of its own — it is assembled from the rows above. The rule
-that matters is the day boundary: sessions carry a date, but AP ticks and vocabulary answers are
-instants, and 00:30 in Istanbul is still the previous day in UTC. Everything is bucketed through
-`todayKey`, the same function that defines "today" everywhere else. A 23:15 scheduled Claude
-routine reads the JSON and writes the evening report.
+**Study** keeps four parts (owner, 2026-10-28): APs, GPA, SAT and UCAT. The session timer,
+modules, planner, daily review and stats pages were removed then. Their tables (`Module`,
+`StudySession`, `XpAward`, `StudyConfig`, `StudyTask`…), libs and API routes stay: the 23:15
+scheduled Claude routine still reads `/api/study/review` (now with nothing new to report), and the
+data is kept should the pages come back.
 
 **Study.** `VocabWord` has one or more `VocabMeaning`s, and every meaning becomes one question.
 A `VocabRun` is a sitting of the test, holding a `VocabQuestion` per meaning with its shuffled
@@ -236,13 +205,13 @@ options. The three categories are the verdicts on the current run's questions, s
 run is what resets them. The rule that keeps the test honest: a question's distractors never
 include another sense of the same word, which would be a second correct answer.
 
-**Quick tests** (`/study/sat-vocab/quick`) are `VocabRun`s with `kind = QUICK`: up to 10–50 questions
+**Quick tests** (`/study/sat/vocab/quick`) are `VocabRun`s with `kind = QUICK`: up to 10–50 questions
 from one pool — all words, the full run's To Review or Ambiguous, meanings the full run hasn't asked
 yet, or words whose flashcard was forgotten (`lapses > 0`). Wrong answers still come from the whole
 list (`buildQuestions`' `ask`). `currentRun()` and the daily review only ever read `kind = FULL`, so a
 quick test never moves the full test or its three lists.
 
-**Flashcards** (`/study/sat-vocab/flashcards`): one `VocabCard` per word, made on first visit
+**Flashcards** (`/study/sat/vocab/flashcards`): one `VocabCard` per word, made on first visit
 (`ensureCards`, new cards in a random fixed order). Scheduling is Anki's classic SM-2 with its
 defaults, pure in `lib/flashcards.ts`: learning steps 1m/10m, graduate at 1 day (Easy 4), Hard ×1.2,
 Good ×ease (half the lateness counted), Easy ×ease×1.3; Again on a review → relearn 10m, ease −0.2
@@ -251,11 +220,12 @@ reviews, then new cards (daily limits in `StudyConfig`), then learning cards due
 Each answer writes a `VocabReview` with the card as it was — for the daily counts and for Undo. An
 answer carries the card's `reps`, so a double tap is refused (counted once).
 
-**APs.** `ApCourse` and `ApUnit`, seeded from College Board CEDs. Courses sharing a `series`
-(Physics C) render as one continuously-numbered sequence. Ticking a unit stores a timestamp, so
-it doubles as "finished on".
+**APs.** `ApCourse` and `ApUnit`, seeded from College Board CEDs: Statistics, Computer Science A,
+Biology, Chemistry, Calculus BC (043 replaced the earlier set). Courses sharing a `series` render as
+one continuously-numbered sequence (none do now). Ticking a unit stores a timestamp, so it doubles
+as "finished on".
 
-**SAT** (`/sat`, its own section; Vocabulary moved here from `/study/sat-vocab`, which redirects).
+**SAT** (`/study/sat`; `/sat` and `/study/sat-vocab` redirect).
 The Question Bank lists College Board's SAT Suite Question Bank, fetched server-side from its public
 but undocumented API (`lib/sat-qbank-service.ts`: `get-questions` per section, cached 12 h;
 `get-question {external_id}` or `saic.collegeboard.org/disclosed/{ibn}.json` per question, cached
@@ -263,7 +233,7 @@ but undocumented API (`lib/sat-qbank-service.ts`: `get-questions` per section, c
 answers (a typed answer is right if it equals, or is worth the same number as, any accepted one);
 `lib/sat-html.ts` cleans the HTML (MathML and SVG kept, scripts/handlers/links dropped) before it is
 cached or sent. Filters (domain, skill, difficulty, last result) live in the address. A practice set
-is `/sat/practice?ids=…` (outside the sidebar's route group, full-window): Bluebook's frame — clock at
+is `/study/sat/practice?ids=…` (outside Study's `(shell)` route group, full-window): Bluebook's frame — clock at
 Bluebook's pace (32 min/27 R&W, 35 min/22 Math), directions, Desmos's SAT calculator in an iframe, a
 reference sheet, Mark for Review, the answer eliminator, the navigator, Check Your Work, Submit, then
 results with explanations. Only answers are stored (`SatAttempt`, 042), marked on the server.
@@ -273,6 +243,10 @@ two exams, two performances and a project. Averages are not stored. A half's les
 the mean of the marks filled in (a blank is skipped, not a zero); the half weights those lessons
 by hours; the year is the average of the two halves. One half with no marks yet leaves the year
 as the other half.
+
+**UCAT** (`/study/ucat`). No question bank: the official UCAT material lives behind its own player
+at practice.ucat.ac.uk with no public feed, so the page links there, lists the four subtests, and
+logs practice-test scores (`UcatScore`, 044; three subtests 300–900, SJT band 1–4; `lib/ucat.ts`).
 
 ---
 
@@ -301,7 +275,7 @@ app/
   library/…         five media types, each list / detail / edit / new
   self-care/…       the day's meals from the diet plan (/self-care, installable as "Diet", works offline)
   finances/…        month view, plus /log (installable PWA)
-  study/…           sessions, modules, stats, APs, SAT vocabulary
+  study/…           APs, GPA, SAT (question bank, practice screen, vocabulary), UCAT
   shopping/…        shops by category (a metro map); a shop's page with its products; new / edit
   api/…             route handlers, grouped by section
 components/<section>/   client components, one folder per section

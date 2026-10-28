@@ -23,7 +23,7 @@ export default function StartPractice({ ids }: { ids: string[] }) {
       const j = i + Math.floor(Math.random() * (pool.length - i));
       [pool[i], pool[j]] = [pool[j], pool[i]];
     }
-    router.push(`/sat/practice?ids=${pool.slice(0, count).join(",")}`);
+    router.push(`/study/sat/practice?ids=${pool.slice(0, count).join(",")}`);
   };
 
   return (

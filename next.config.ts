@@ -39,9 +39,10 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
-      // Vocabulary moved from Study to the SAT section. Old bookmarks still land. Temporary, so
-      // browsers don't cache it if the path is ever reused.
-      { source: "/study/sat-vocab/:path*", destination: "/sat/vocab/:path*", permanent: false },
+      // The SAT section moved under Study, and Vocabulary with it. Old bookmarks still land.
+      // Temporary, so browsers don't cache them if a path is ever reused.
+      { source: "/sat/:path*", destination: "/study/sat/:path*", permanent: false },
+      { source: "/study/sat-vocab/:path*", destination: "/study/sat/vocab/:path*", permanent: false },
     ];
   },
   async headers() {

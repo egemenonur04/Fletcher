@@ -284,12 +284,13 @@ Anime, TV (code + tables). Order: design first, then SAT, then Health.
       typed and ibn items) in Chromium at 1280/390; 46 unit assertions. **Not yet seen against the
       real bank** (collegeboard.org and desmos.com are blocked from the sandbox) — first live check
       is the user's. Not built: Bluebook's highlighter/notes tool.
-- [ ] **3b. Study rework** (user, 2026-10-28) — Study keeps only APs, GPA, SAT (moved under
-      `/study/sat`, practice `/study/sat/practice`; `/sat` and `/study/sat-vocab` redirect) and a new
-      UCAT page (user chose: official links + a practice-score log, no question bank — UCAT has no
-      public bank; practice.ucat.ac.uk is the official hub). Timer/Planner/Modules/Review/Stats pages
-      removed (APIs and tables kept: the nightly review routine still reads /api/study/review).
-      APs become Statistics, CS A, Biology, Chemistry, Calculus BC (043). UCAT log = `UcatScore` (044).
+- [x] **3b. Study rework** (2026-10-28) — Study = Overview, APs, GPA, SAT (`/study/sat`, practice
+      `/study/sat/practice` outside `app/study/(shell)`; `/sat/*` and `/study/sat-vocab/*` redirect,
+      back-nav skips them), UCAT (`/study/ucat`: official links + `UcatScore` log, 044; user chose no
+      question bank — none is public). Timer/Planner/Modules/Review/Stats pages + their components and
+      the vocab quick-start removed; APIs, libs, tables kept (nightly routine reads /api/study/review).
+      APs → Statistics, CS A, Biology, Chemistry, Calculus BC (043, tested locally twice, ticks kept).
+      Checks: typecheck, lint, tests (+12 UCAT), build, Chromium (UCAT log saves, redirects 307).
 - [ ] **4. Health** — Diet/calorie parts become Health; Strava connect (OAuth; user creates a
       Strava API app → client ID/secret in Vercel), runs imported; exercise routine log;
       cumulative health tracking.

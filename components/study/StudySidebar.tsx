@@ -1,18 +1,30 @@
 "use client";
 
-import { Calculator, ClipboardList, GraduationCap, Layers, ListTodo, Timer, TrendingUp } from "lucide-react";
+import { BookA, Calculator, GalleryHorizontalEnd, GraduationCap, LayoutGrid, Library, ListChecks, Stethoscope, Zap } from "lucide-react";
 import SectionNav, { type NavGroup } from "@/components/layout/SectionNav";
 
 const GROUPS: NavGroup[] = [
   {
     items: [
-      { href: "/study", label: "Study", icon: Timer, exact: true },
-      { href: "/study/tasks", label: "Planner", icon: ListTodo },
-      { href: "/study/modules", label: "Modules", icon: Layers },
-      { href: "/study/review", label: "Review", icon: ClipboardList },
-      { href: "/study/stats", label: "Stats", icon: TrendingUp },
+      { href: "/study", label: "Overview", icon: LayoutGrid, exact: true },
       { href: "/study/ap", label: "APs", icon: GraduationCap },
       { href: "/study/gpa", label: "GPA", icon: Calculator },
+    ],
+  },
+  {
+    label: "SAT",
+    items: [
+      { href: "/study/sat", label: "Question Bank", icon: Library, exact: true },
+      { href: "/study/sat/vocab", label: "SAT Vocabulary", icon: BookA, exact: true },
+      { href: "/study/sat/vocab/flashcards", label: "Flashcards", icon: GalleryHorizontalEnd },
+      { href: "/study/sat/vocab/quick", label: "Quick test", icon: Zap },
+      { href: "/study/sat/vocab/words", label: "Word list", icon: ListChecks },
+    ],
+  },
+  {
+    label: "UCAT",
+    items: [
+      { href: "/study/ucat", label: "UCAT", icon: Stethoscope },
     ],
   },
 ];

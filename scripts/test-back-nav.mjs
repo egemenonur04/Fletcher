@@ -76,13 +76,14 @@ const parents = [
   ["/shopping/new", "/shopping"],
   ["/shopping", "/"],
   ["/self-care", "/"],
-  ["/sat/vocab/words", "/sat/vocab"],
-  ["/sat/vocab/flashcards", "/sat/vocab"],
-  ["/sat/vocab/quick", "/sat/vocab"],
-  ["/sat/vocab", "/sat"],
-  ["/sat", "/"],
-  ["/study/review?date=2026-10-24", "/study"],
-  ["/study/modules", "/study"],
+  ["/study/sat/vocab/words", "/study/sat/vocab"],
+  ["/study/sat/vocab/flashcards", "/study/sat/vocab"],
+  ["/study/sat/vocab/quick", "/study/sat/vocab"],
+  ["/study/sat/vocab", "/study/sat"],
+  ["/study/sat/practice?ids=6b4c8a1e", "/study/sat"],
+  ["/study/sat", "/study"],
+  ["/study/ap", "/study"],
+  ["/study/ucat", "/study"],
   ["/study", "/"],
   ["/library", "/"],
   ["/finances/2026/10", "/"],
@@ -131,9 +132,9 @@ eq(decideBack(trail, "/library/movies?q=dune", NOW), { type: "history" }, "back 
 
 // Review dates are real visits: back returns to the day you came from, not to Study.
 trail = restoreTrail(null, "/study", null, ORIGIN);
-trail = applyNavigation(trail, "/study/review", "push");
-trail = applyNavigation(trail, "/study/review?date=2026-10-24", "push");
-eq(decideBack(trail, "/study/review?date=2026-10-24", NOW), { type: "history" }, "the previous review day is the previous page");
+trail = applyNavigation(trail, "/study/sat", "push");
+trail = applyNavigation(trail, "/study/sat?section=math", "push");
+eq(decideBack(trail, "/study/sat?section=math", NOW), { type: "history" }, "the previous filter is the previous page");
 
 // `/finances` redirects to the current month. Stepping onto it from that month loops.
 trail = restoreTrail(null, "/", null, ORIGIN);
@@ -144,8 +145,12 @@ eq(decideBack(trail, "/finances/2026/10", NOW), { type: "href", href: "/" }, "sk
 // An old vocabulary path does the same.
 trail = restoreTrail(null, "/", null, ORIGIN);
 trail = applyNavigation(trail, "/study/sat-vocab", "push");
-trail = applyNavigation(trail, "/sat/vocab", "push");
-eq(decideBack(trail, "/sat/vocab", NOW), { type: "href", href: "/" }, "skip /study/sat-vocab, it redirects back here");
+trail = applyNavigation(trail, "/study/sat/vocab", "push");
+eq(decideBack(trail, "/study/sat/vocab", NOW), { type: "href", href: "/" }, "skip /study/sat-vocab, it redirects back here");
+trail = restoreTrail(null, "/", null, ORIGIN);
+trail = applyNavigation(trail, "/sat", "push");
+trail = applyNavigation(trail, "/study/sat", "push");
+eq(decideBack(trail, "/study/sat", NOW), { type: "href", href: "/" }, "skip /sat, it redirects back here");
 
 // Login bounces a signed-out session straight back. Don't offer it.
 trail = applyNavigation(restoreTrail(null, "/library", null, ORIGIN), "/login", "push");
