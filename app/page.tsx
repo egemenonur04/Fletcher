@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { BookMarked, HeartPulse, Wallet, GraduationCap, ShoppingBag, ArrowUpRight } from "lucide-react";
+import { BookMarked, HeartPulse, Wallet, GraduationCap, ShoppingBag } from "lucide-react";
+import { APP_TIME_ZONE } from "@/lib/dates";
 
 const SECTIONS = [
   { href: "/study", label: "Study", description: "Sessions and the stats they level, APs, planner, GPA", icon: GraduationCap },
@@ -9,27 +10,33 @@ const SECTIONS = [
   { href: "/shopping", label: "Shopping", description: "Shops you've tried — what was good and what wasn't", icon: ShoppingBag },
 ];
 
-export default function PortalPage() {
-  return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      <main className="flex-1 px-4 sm:px-8 py-12 sm:py-20">
-        <div className="max-w-5xl mx-auto">
-          <p className="text-sm text-gray-500">Your personal hub</p>
-          <h1 className="mt-2 text-4xl sm:text-6xl font-medium tracking-tight text-gray-900">My Portal</h1>
+// Rendered per request so the dateline is today's, in the app's zone.
+export const dynamic = "force-dynamic";
 
-          <ul className="mt-12 sm:mt-16 grid grid-cols-1 sm:grid-cols-2 gap-3">
+export default function PortalPage() {
+  const dateline = new Intl.DateTimeFormat("en-GB", {
+    weekday: "long", day: "numeric", month: "long", year: "numeric",
+    timeZone: APP_TIME_ZONE,
+  }).format(new Date());
+
+  return (
+    <div className="min-h-screen bg-white flex flex-col">
+      <main className="flex-1 px-4 sm:px-8 py-8 sm:py-12">
+        <div className="max-w-5xl mx-auto">
+          <header className="text-center">
+            <h1 className="text-5xl sm:text-7xl tracking-tight text-gray-900">My Portal</h1>
+            <div className="mt-4 masthead-rule" />
+            <p className="py-2 text-xs uppercase tracking-wide text-gray-700">{dateline}</p>
+            <div className="border-t border-gray-900" />
+          </header>
+
+          <ul className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 border-l border-t border-gray-200">
             {SECTIONS.map(({ href, label, description, icon: Icon }) => (
-              <li key={href}>
-                <Link href={href}
-                  className="theme-tile group flex h-full flex-col justify-between gap-10 rounded-2xl border border-gray-200 p-6 sm:p-8 transition-colors">
-                  <div className="flex items-start justify-between">
-                    <Icon className="w-6 h-6 text-gray-900" strokeWidth={1.5} />
-                    <ArrowUpRight className="w-5 h-5 text-gray-400 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-gray-900 motion-reduce:transition-none" />
-                  </div>
-                  <div>
-                    <p className="text-xl font-medium tracking-tight text-gray-900">{label}</p>
-                    <p className="mt-1 text-sm text-gray-500">{description}</p>
-                  </div>
+              <li key={href} className="border-r border-b border-gray-200">
+                <Link href={href} className="group flex h-full flex-col gap-3 p-6 hover:bg-gray-50 transition-colors">
+                  <Icon className="w-5 h-5 text-gray-900" strokeWidth={1.5} />
+                  <p className="text-2xl font-bold tracking-tight text-gray-900 group-hover:underline underline-offset-4 decoration-1">{label}</p>
+                  <p className="text-[15px] leading-snug text-gray-600">{description}</p>
                 </Link>
               </li>
             ))}

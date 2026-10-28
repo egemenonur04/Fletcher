@@ -1,8 +1,8 @@
-/* The site's one look: paper and ink, after remarkable.com.
+/* The site's one look: a newspaper, after The New York Times (by way of remarkable.com).
  *
  * Colours are not here — app/palette.css (generated) swaps Tailwind's colour variables, which
- * restyles every page by itself. This file adds what a palette cannot: type, radii, the absence of
- * shadows, pill buttons, and the shells' details, keyed off hook classes (theme-sidebar,
+ * restyles every page by itself. This file adds what a palette cannot: the two typefaces, square
+ * corners, the absence of shadows, and the shells' details, keyed off hook classes (theme-sidebar,
  * theme-brand, theme-nav-item[data-active], theme-header, theme-tile, theme-gate; on a phone,
  * theme-topbar and theme-drawer — see SectionNav).
  *
@@ -10,17 +10,21 @@
  * restyle a utility (`.bg-gray-900`) without !important. The rules live in docs/design/paper.md. */
 
 :root {
-  --font-body: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  /* Sheets are softly rounded; the page never casts a shadow. */
-  --radius-lg: 0.75rem;
-  --radius-xl: 1rem;
-  --radius-2xl: 1.25rem;
+  /* Text and headlines are set in a serif, as in the paper; the furniture — buttons, fields,
+   * menus, labels, small print — in a Franklin Gothic sans, as on the paper's site. */
+  --font-body: var(--font-serif), Georgia, "Times New Roman", serif;
+  --font-ui: var(--font-franklin), "Helvetica Neue", Arial, sans-serif;
+  /* Corners are nearly square; the page never casts a shadow. */
+  --radius-md: 0.1875rem;
+  --radius-lg: 0.25rem;
+  --radius-xl: 0.25rem;
+  --radius-2xl: 0.375rem;
   --shadow-sm: 0 0 #0000;
   --shadow: 0 0 #0000;
   --shadow-md: 0 0 #0000;
   --shadow-lg: 0 0 #0000;
   /* What floats over the page — a dialog, a menu, the drawer — is lifted just enough to read. */
-  --shadow-xl: 0 1px 2px rgb(27 27 25 / 0.06), 0 12px 32px rgb(27 27 25 / 0.1);
+  --shadow-xl: 0 1px 2px rgb(18 18 18 / 0.08), 0 10px 28px rgb(18 18 18 / 0.12);
   --shadow-2xl: var(--shadow-xl);
   scrollbar-color: var(--color-gray-300) transparent;
 }
@@ -30,35 +34,48 @@
   color: var(--color-white);
 }
 
-/* Type: one sans, set quietly. Titles are large and medium-weight with tight tracking rather than
- * bold; labels are small and grey, not shouted. */
+/* ── Type ───────────────────────────────────────────────────────────────── */
+
+button,
+input,
+select,
+textarea,
+label,
+nav,
+th,
+.text-xs,
+.text-\[11px\],
+.text-\[10px\],
+.uppercase,
+.theme-brand,
+.theme-topbar {
+  font-family: var(--font-ui);
+}
+
+/* Headlines: bold serif, set tight, like a front page. */
 h1,
-h2.text-2xl,
-h2.text-xl {
-  font-weight: 500;
-  letter-spacing: -0.02em;
+h2,
+h3 {
+  font-family: var(--font-body);
+  font-weight: 700;
+  letter-spacing: -0.01em;
 }
 h1.text-2xl,
 h1.text-xl,
 h2.text-2xl {
-  font-size: 1.75rem;
+  font-size: 1.875rem;
   line-height: 2.25rem;
 }
-.font-bold {
-  font-weight: 600;
-}
+/* Section labels are the paper's kickers: small, bold, spaced Franklin caps. */
 .uppercase.tracking-wide,
 .uppercase.tracking-wider {
-  letter-spacing: 0.06em;
-  font-weight: 500;
+  letter-spacing: 0.08em;
+  font-weight: 700;
 }
 
-/* Buttons are pills: the main action in ink, the rest a hairline outline. A button that fills its
- * row or holds two lines (a choice in a toggle group) keeps its softer rectangle. */
-:is(:is(button, a):is(.bg-gray-900, .bg-emerald-600, .bg-green-600, .bg-red-600), button.border):not(.w-full, .flex-1, .text-left, .rounded-xl, .rounded-2xl, .theme-tile, .theme-nav-item) {
-  border-radius: 999px;
-}
-/* The sections' coloured actions are ink, like every other main action. */
+/* ── Controls ───────────────────────────────────────────────────────────── */
+
+/* The main action is ink; coloured actions are ink too. Buttons speak in bold Franklin. */
 :is(button, a).bg-emerald-600,
 :is(button, a).bg-green-600 {
   background-color: var(--color-gray-900);
@@ -66,8 +83,11 @@ h2.text-2xl {
 :is(button, a):is(.bg-gray-900, .bg-emerald-600, .bg-green-600):hover:not(:disabled) {
   background-color: var(--color-gray-700);
 }
+button {
+  font-weight: 600;
+}
 
-/* Fields are sheets with a hairline edge; focus is a thin ink ring, never a glow. */
+/* Fields have a hairline edge; focus is a thin ink ring, never a glow. */
 :is(input, select, textarea):focus-visible {
   outline: none;
   border-color: var(--color-gray-900);
@@ -83,23 +103,19 @@ h2.text-2xl {
 
 /* ── Shells ─────────────────────────────────────────────────────────────── */
 
-/* The sidebar is part of the page, not a white slab beside it: paper, with one hairline. */
+/* The sidebar is part of the page, not a slab beside it, divided by one rule. */
 .theme-sidebar {
   background-color: var(--color-gray-50);
 }
-.theme-brand {
-  letter-spacing: -0.02em;
-}
 .theme-brand .font-bold {
-  font-weight: 600;
-}
-.theme-nav-item {
-  border-radius: 999px;
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 1.25rem;
 }
 
-/* Headers sit on the paper too, divided from the page by a hairline. */
+/* Headers sit on the page too, under a rule. */
 .theme-header {
-  background-color: color-mix(in srgb, var(--color-gray-50) 88%, transparent);
+  background-color: color-mix(in srgb, var(--color-white) 90%, transparent);
   backdrop-filter: saturate(1.2) blur(12px);
 }
 
@@ -116,15 +132,19 @@ h2.text-2xl {
   }
 }
 
-/* The portal's sections and the sign-in sheet. */
+/* The portal's sections and the library's: white sheets that darken their rule on hover. */
 .theme-tile {
   background-color: var(--color-white);
 }
 .theme-tile:hover {
   border-color: var(--color-gray-900);
 }
-.theme-gate-mark {
-  border-radius: 999px;
+
+/* The masthead's double rule, as under the paper's nameplate. */
+.masthead-rule {
+  border-top: 1px solid var(--color-gray-900);
+  border-bottom: 1px solid var(--color-gray-900);
+  height: 4px;
 }
 
 @media (prefers-reduced-motion: reduce) {

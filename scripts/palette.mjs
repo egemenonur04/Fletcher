@@ -2,8 +2,8 @@
 //
 // Tailwind v4 draws every colour utility from a CSS variable (`bg-gray-900` is
 // `var(--color-gray-900)`), so redefining the variables restyles every page at once, without
-// touching a component. The look is paper and ink, after remarkable.com: a warm off-white page,
-// white sheets, near-black ink. The gray ramp is written out by hand; every hue is generated from
+// touching a component. The look is a newspaper, after The New York Times (by way of
+// remarkable.com): a near-white page, white sheets, near-black ink. The gray ramp is written out by hand; every hue is generated from
 // one hue angle and a peak chroma along a light ramp (50 is a pale tint, 900 is dark). Most hues
 // are drained to a whisper of colour so the site reads black and white; red, green and amber keep
 // enough to still mean danger, done and warning.
@@ -21,7 +21,7 @@ const RAMP = {
 };
 
 // 50 is the page, 200 a hairline, 500 secondary text, 900 the ink. White is a sheet of paper.
-const GRAY = ["#f5f4f0", "#edece7", "#e1dfd9", "#cbc9c2", "#a4a29c", "#7c7b76", "#5e5d59", "#464541", "#2f2e2b", "#1b1b19", "#111110"];
+const GRAY = ["#fafaf9", "#f2f2f0", "#dfdfdd", "#c7c7c5", "#a3a3a1", "#757573", "#5a5a58", "#434341", "#2c2c2b", "#121212", "#0a0a0a"];
 const WHITE = "#ffffff";
 
 // [hue angle, peak chroma]. A quiet hue is barely off-grey.

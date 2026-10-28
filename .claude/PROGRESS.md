@@ -261,12 +261,12 @@ look with ONE black-and-white minimalist design modelled on remarkable.com (them
 questions come from College Board's SAT Suite Question Bank at runtime (unofficial endpoint;
 collegeboard.org is blocked from this sandbox, so the user tests first); delete Wardrobe, Books,
 Anime, TV (code + tables). Order: design first, then SAT, then Health.
-- [x] **1. Design** (2026-10-27) — "Paper": `scripts/palette.mjs` → `app/palette.css` (warm paper
-      grays, hues drained except red/green/amber/rose) + `app/design.css` (Inter, medium titles, pill
-      buttons, no shadows). Picker, other looks, their fonts and SVG filters deleted; portal
-      redesigned; `docs/design/paper.md`; AGENTS.md/CODEBASE.md updated. Checked: typecheck, lint,
-      tests, build, screenshots at 1280 and 390 against a local Postgres. remarkable.com itself is
-      blocked from this sandbox — the look follows its known style, not a fetched copy.
+- [x] **1. Design** (2026-10-27, newspaper pass 2026-10-28) — "Paper", now after The New York
+      Times: Source Serif 4 headlines/text + Libre Franklin for controls (assigned in
+      `app/design.css`), near-white `scripts/palette.mjs` grays, near-square corners, masthead with
+      double rule on the portal. Picker, other looks, fonts and filters deleted;
+      `docs/design/paper.md`; AGENTS.md/CODEBASE.md updated. Checked: typecheck, lint, tests, build,
+      screenshots at 1280 and 390. remarkable.com/nytimes.com are blocked from this sandbox.
 - [x] **2. Delete** (2026-10-27) Wardrobe, Books, Anime, TV: pages, API, components, libs
       (Open Library/Google Books, anime MAL import, TMDB TV, wash calculator), their tests, the
       `/wardrobe` redirect, schema models. Kept what manga/movies share (MAL client + image CDN,
