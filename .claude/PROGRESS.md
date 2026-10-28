@@ -274,9 +274,15 @@ Anime, TV (code + tables). Order: design first, then SAT, then Health.
       `041-drop-books-anime-tv-wardrobe.sql` (destructive, after deploy; tested twice locally,
       diff empty); `fresh-install.sql` regenerated (35 tables). Checks: typecheck, lint, tests,
       build, screenshots.
-- [ ] **3. SAT category** — top-level section holding Vocabulary (moved from Study) and a
-      Question Bank: browse/filter College Board questions, then solve them in a Bluebook-style
-      exam screen (timer, mark for review, question navigator, eliminator, calculator, reference).
+- [ ] **3. SAT section** (in progress 2026-10-28) — `/sat` with its own sidebar (route group
+      `app/sat/(shell)`); Vocabulary moved there from `/study/sat-vocab` (redirect kept). Question
+      Bank: College Board's unofficial qbank API (POST
+      `qbank-api.collegeboard.org/msreportingquestionbank-prod/questionbank/digital/get-questions`
+      `{asmtEventId:99,test:1|2,domain:"INI,CAS,EOI,SEC"|"H,P,Q,S"}`; `.../get-question`
+      `{external_id}`; legacy `saic.collegeboard.org/disclosed/{ibn}.json` → `[0]`), fetched
+      server-side and cached, HTML sanitised (sanitize-html). Attempts in `SatAttempt` (042).
+      Practice at `/sat/practice?ids=` full-screen in a Bluebook-style frame (timer, mark for
+      review, eliminator, navigator, Desmos iframe, reference sheet, check-your-work, results).
 - [ ] **4. Health** — Diet/calorie parts become Health; Strava connect (OAuth; user creates a
       Strava API app → client ID/secret in Vercel), runs imported; exercise routine log;
       cumulative health tracking.
