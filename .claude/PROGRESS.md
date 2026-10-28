@@ -907,6 +907,12 @@ Anime, TV (code + tables). Order: design first, then SAT, then Health.
 
 ## Blocked / needs the user
 
+- **Remove the four old AP courses** (2026-10-28). 043's inserts are applied (Biology, Chemistry,
+  Calculus BC are live); its DELETE waits on Supabase's destructive-SQL confirmation, which nobody
+  answered. Until then the APs page also shows Physics C ×2, World History, Macro (no ticks). Run:
+  `DELETE FROM "ApCourse" WHERE "id" IN ('apc_physc_mech','apc_physc_em','apc_world','apc_macro');`
+  or approve the prompt when Claude retries. 044 (UcatScore) is applied.
+
 - **Run `041-drop-books-anime-tv-wardrobe.sql`** on the new Supabase (the deploy removing those
   sections is live on main, 2f99e51; all ten tables were checked empty 2026-10-28). Claude tried via
   the Supabase connector; it asks the user to confirm destructive SQL and nobody answered in time.
