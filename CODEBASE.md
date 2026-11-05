@@ -182,10 +182,19 @@ but undocumented API (`lib/sat-qbank-service.ts`: `get-questions` per section, c
 answers (a typed answer is right if it equals, or is worth the same number as, any accepted one);
 `lib/sat-html.ts` cleans the HTML (MathML and SVG kept, scripts/handlers/links dropped) before it is
 cached or sent. Filters (domain, skill, difficulty, last result) live in the address. A practice set
-is `/study/sat/practice?ids=…` (outside Study's `(shell)` route group, full-window): Bluebook's frame — clock at
-Bluebook's pace (32 min/27 R&W, 35 min/22 Math), directions, Desmos's SAT calculator in an iframe, a
-reference sheet, Mark for Review, the answer eliminator, the navigator, Check Your Work, Submit, then
-results with explanations. Only answers are stored (`SatAttempt`, 042), marked on the server.
+is `/study/sat/practice?ids=…` (outside Study's `(shell)` route group, full-window): a screen drawn to
+look and work like Bluebook — clock at Bluebook's pace (32 min/27 R&W, 35 min/22 Math; hide/show, can't
+hide in the last five minutes), directions, a resizable passage/question split for R&W and typed
+answers and one column for Math, Desmos's SAT calculator in an iframe, a reference sheet, highlights
+in three colours with underline and notes, Mark for Review, the answer eliminator, the navigator,
+Check Your Work, Submit, then results with explanations. Keyboard shortcuts are under More.
+`components/sat/BluebookPractice.tsx` is the screen, `BluebookTools.tsx` its windows and dialogs,
+`BluebookAnnotator.tsx` the DOM side of highlighting; the rules are pure in `lib/sat-annotations.ts`
+(spans of text offsets, never overlapping, so they survive a redraw) and `lib/sat-practice.ts`
+(tested in `scripts/test-sat-practice.mjs`). Only answers are stored on the server (`SatAttempt`,
+042), marked there, at Submit. Until then a set lives in this browser's localStorage, one set at a
+time (`sat-practice-attempt`), so a reload or leaving keeps it and the bank page offers Resume; it
+stands the clock still while closed. Starting another set replaces it. No migration.
 
 **GPA** (`/study/gpa`). A `GpaLesson` is a lesson's weekly hours plus, for each half of the year,
 two exams, two performances and a project. Averages are not stored. A half's lesson average is
