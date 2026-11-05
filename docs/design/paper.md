@@ -38,6 +38,14 @@ type size and weight and from rules, not from colour or boxes.
 8. **Icons are thin outlines** (lucide, `strokeWidth={1.5}` where large), in ink or grey.
 9. **Motion is short and functional.** Respect reduced motion. **Focus** is a thin ink ring.
 
+## The one exception
+
+The SAT practice screen (`/study/sat/practice`) is not Paper. It looks like the Bluebook test screen
+on purpose, so practice feels like test day (owner, 2026-11-05): Noto Serif and Roboto, Bluebook's
+blue, rounded buttons. Everything about it is scoped under `.bb` in `app/design.css`, including its
+colours, and nothing outside it uses them. Open fonts and our own drawings only: no College Board
+logos, assets or font files. The results page after Submit is back in Paper.
+
 ## Changing the look
 
 - A colour: edit `scripts/palette.mjs`, run `node scripts/palette.mjs`, commit both files.

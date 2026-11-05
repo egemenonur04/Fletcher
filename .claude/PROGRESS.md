@@ -6,6 +6,21 @@
 
 ## Done
 
+- [x] **SAT practice screen rebuilt after Bluebook** (asked 2026-11-05, in Turkish: the same as the
+      Bluebook interface, with highlighting, notes and striking out answers). Its own look under
+      `.bb` in `app/design.css` (Noto Serif, Roboto, Bluebook's blue; the Paper exception is in
+      `docs/design/paper.md`). New: highlights in three colours with underline and notes
+      (`BluebookAnnotator.tsx`, `lib/sat-annotations.ts`), Highlights & Notes list, More menu,
+      keyboard shortcuts, the calculator keeping its state when closed, the reference sheet with
+      drawn figures, the set kept in localStorage until Submit with Resume on the bank page
+      (`lib/sat-practice.ts`), Try again when saving results fails. Picking a crossed-out answer
+      brings it back; crossing out the picked one clears it. No migration. Checked: typecheck, lint,
+      `npm test` (+88 assertions), build with no reachable database, and a production build against a
+      throwaway Postgres with the live College Board bank, R&W and Math (MCQ, typed, a figure), at
+      1000 and 375 wide; rows checked in the database. Not checked: a real phone or touch selection
+      (only the emulated size), Firefox/Safari. Not built: line reader, two-module adaptive sets,
+      zoom. Closing the Browser pane stops rAF, which holds React's streamed page back; that is the
+      test tool, not the site.
 - [x] **Floating back button and SAT Vocabulary quick start** (2026-10-26). The back button was
       noting the visit before the browser had added it, so it had no previous page and did
       nothing useful. It now notes the visit when the history entry is written. The menu watcher
@@ -283,7 +298,7 @@ Anime, TV (code + tables). Order: design first, then SAT, then Health.
       042 applied to Supabase by Claude. Tested against a local College Board stand-in (current,
       typed and ibn items) in Chromium at 1280/390; 46 unit assertions. **Not yet seen against the
       real bank** (collegeboard.org and desmos.com are blocked from the sandbox) — first live check
-      is the user's. Not built: Bluebook's highlighter/notes tool.
+      is the user's.
 - [x] **3b. Study rework** (2026-10-28) — Study = Overview, APs, GPA, SAT (`/study/sat`, practice
       `/study/sat/practice` outside `app/study/(shell)`; `/sat/*` and `/study/sat-vocab/*` redirect,
       back-nav skips them), UCAT (`/study/ucat`: official links + `UcatScore` log, 044; user chose no

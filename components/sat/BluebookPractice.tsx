@@ -1,127 +1,249 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
-  Bookmark, Calculator, ChevronDown, ChevronUp, Clock, MapPin, MoreVertical, Ruler, X,
+  Bookmark, Calculator, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Clock, Highlighter, Keyboard, LogOut, MapPin,
+  MoreVertical, Ruler, X,
 } from "lucide-react";
-import { CalculatorPanel, DirectionsPanel, ReferenceSheet } from "@/components/sat/BluebookTools";
+import {
+  AnnotatedHtml, HighlightToolbar, NotePanel, NotesList, useTextSelection, type Selected,
+} from "@/components/sat/BluebookAnnotator";
+import {
+  CalculatorPanel, DirectionsPanel, ExitDialog, ReferenceSheet, ShortcutsPanel,
+} from "@/components/sat/BluebookTools";
+import {
+  addAnnotation, removeAnnotation, updateAnnotation, type Annotation, type AnnotationArea, type HighlightColor,
+} from "@/lib/sat-annotations";
+import {
+  SAVED_PRACTICE_KEY, clampSplit, cleanTyped, clock, pickChoice, restoreProgress, toggleCrossed,
+  type PracticePhase, type PracticeProgress,
+} from "@/lib/sat-practice";
 import {
   DIFFICULTY_LABELS, DOMAIN_LABELS, SECTION_LABELS, isCorrect, timeLimitSeconds,
-  type SatQuestion,
+  type SatQuestion, type SatSection,
 } from "@/lib/sat-qbank";
 
-type Phase = "test" | "review" | "results";
+const SECTION_NUMBER: Record<SatSection, number> = { rw: 1, math: 2 };
 
-/** "31:05"; an hour or more as "1:02:09". */
-function clock(seconds: number): string {
-  const s = Math.max(0, Math.round(seconds));
-  const h = Math.floor(s / 3600);
-  const m = Math.floor((s % 3600) / 60);
-  const r = s % 60;
-  const mm = h ? String(m).padStart(2, "0") : String(m);
-  return `${h ? `${h}:` : ""}${mm}:${String(r).padStart(2, "0")}`;
+/** The last five minutes: the clock can't be hidden, and says so once. */
+const FINAL_STRETCH = 300;
+
+function readSaved(): string | null {
+  try {
+    return localStorage.getItem(SAVED_PRACTICE_KEY);
+  } catch {
+    return null;
+  }
 }
 
-/** What may be typed in a student-produced response box, as in Bluebook: 5 characters, 6 with a minus. */
-function cleanTyped(value: string): string {
-  const s = value.replace(/[^0-9./-]/g, "");
-  return s.slice(0, s.startsWith("-") ? 6 : 5);
+const never = () => () => {};
+
+/**
+ * The practice screen renders in the browser only: where it starts from is in localStorage, which
+ * the server can't see, and a first paint that then jumps to question 17 is worse than none.
+ */
+export default function BluebookPractice({ questions, missing }: { questions: SatQuestion[]; missing: number }) {
+  const ready = useSyncExternalStore(never, () => true, () => false);
+  if (!ready) return <div className="bb fixed inset-0 flex items-center justify-center text-sm">Loading your questions…</div>;
+  return <Screen questions={questions} missing={missing} />;
 }
 
 /**
- * A practice set the way Bluebook shows a module: a bar of tools and the clock along the top, the
- * passage and the question side by side, the question strip with Mark for Review and the answer
- * eliminator, and along the bottom the question navigator with Back and Next. After the last
- * question comes Check Your Work, then Submit, then results with each question's explanation.
+ * A practice set the way Bluebook shows a module: section, clock and tools along the top; the
+ * passage and the question side by side for Reading and Writing, one column for Math; Mark for
+ * Review and the answer eliminator on the question; highlights and notes on any text; the navigator
+ * with Back and Next along the bottom. After the last question comes Check Your Work, then Submit,
+ * then results with each question's explanation. Until Submit the whole set is kept in this
+ * browser (lib/sat-practice.ts), so nothing is lost to a reload.
  */
-export default function BluebookPractice({ questions, missing }: { questions: SatQuestion[]; missing: number }) {
+function Screen({ questions, missing }: { questions: SatQuestion[]; missing: number }) {
+  const router = useRouter();
+  const ids = useMemo(() => questions.map((x) => x.id), [questions]);
   const limit = useMemo(() => timeLimitSeconds({
     rw: questions.filter((q) => q.section === "rw").length,
     math: questions.filter((q) => q.section === "math").length,
   }), [questions]);
 
-  const [phase, setPhase] = useState<Phase>("test");
-  const [index, setIndex] = useState(0);
-  const [answers, setAnswers] = useState<Record<string, string>>({});
-  const [marked, setMarked] = useState<Set<string>>(new Set());
-  const [crossed, setCrossed] = useState<Record<string, string[]>>({});
-  const [eliminator, setEliminator] = useState(false);
-  const [left, setLeft] = useState(limit);
+  const [start] = useState(() => restoreProgress(readSaved(), ids, limit));
+  const [p, setP] = useState<PracticeProgress>(start);
+  const [left, setLeft] = useState(start.left);
+  const [finished, setFinished] = useState(false);
   const [clockHidden, setClockHidden] = useState(false);
   const [navOpen, setNavOpen] = useState(false);
-  const [tool, setTool] = useState<"calculator" | "reference" | "directions" | null>(null);
-  const [split, setSplit] = useState(50);
+  const [moreOpen, setMoreOpen] = useState(false);
+  const [calculator, setCalculator] = useState<"never" | "open" | "closed">("never");
+  const [dialog, setDialog] = useState<"reference" | "directions" | "shortcuts" | "exit" | null>(null);
+  const [sheet, setSheet] = useState<"list" | { note: string } | null>(null);
+  const [selected, setSelected] = useState<Selected | null>(null);
+  const [picked, setPicked] = useState<{ id: string; rect: DOMRect } | null>(null);
   const [saved, setSaved] = useState<"idle" | "saving" | "saved" | string>("idle");
   const [reviewing, setReviewing] = useState<number | null>(null);
+  const [times, setTimes] = useState<Record<string, number>>({});
+
+  const { phase, index, answers, crossed, eliminator, split } = p;
+  const marked = useMemo(() => new Set(p.marked), [p.marked]);
+  const q = questions[index];
+  const notes = useMemo(() => p.annotations[q.id] ?? [], [p.annotations, q.id]);
+  const hasMath = questions.some((x) => x.section === "math");
 
   // Time on each question: the clock runs for whichever question is open.
-  const spent = useRef<Record<string, number>>({});
+  const spent = useRef<Record<string, number>>(start.spent);
   const openedAt = useRef(0);
-  const [times, setTimes] = useState<Record<string, number>>({});
-  const q = questions[index];
-  const hasMath = questions.some((x) => x.section === "math");
+  const leftNow = useRef(start.left);
+  const latest = useRef(p);
+  useEffect(() => {
+    latest.current = p;
+    leftNow.current = left;
+  });
 
   const bank = useCallback(() => {
     const now = Date.now();
-    const id = questions[index]?.id;
-    if (id) spent.current[id] = (spent.current[id] ?? 0) + (now - openedAt.current) / 1000;
+    const id = ids[latest.current.index];
+    if (id && openedAt.current) spent.current[id] = (spent.current[id] ?? 0) + (now - openedAt.current) / 1000;
     openedAt.current = now;
-  }, [questions, index]);
+  }, [ids]);
 
   useEffect(() => {
     openedAt.current = Date.now();
   }, []);
 
-  const goTo = (i: number) => {
+  const store = useCallback(() => {
     bank();
-    setIndex(i);
-    setPhase("test");
-    setNavOpen(false);
+    try {
+      localStorage.setItem(SAVED_PRACTICE_KEY, JSON.stringify({ ...latest.current, ids, left: leftNow.current, spent: spent.current }));
+    } catch {
+      // Private browsing or a full disk: the set simply won't survive a reload.
+    }
+  }, [bank, ids]);
+
+  const forget = useCallback(() => {
+    try {
+      localStorage.removeItem(SAVED_PRACTICE_KEY);
+    } catch {
+      // Nothing to do; a stale set is offered back at worst.
+    }
+  }, []);
+
+  // Keeping the set: shortly after a change, every few seconds for the clock, and on the way out.
+  useEffect(() => {
+    if (finished) return;
+    const t = setTimeout(store, 300);
+    return () => clearTimeout(t);
+  }, [p, finished, store]);
+  useEffect(() => {
+    if (finished) return;
+    const t = setInterval(store, 5000);
+    window.addEventListener("pagehide", store);
+    return () => {
+      clearInterval(t);
+      window.removeEventListener("pagehide", store);
+    };
+  }, [finished, store]);
+
+  // The countdown, from a fixed end so a throttled background tab doesn't slow it. At zero the set
+  // moves to Check Your Work; nothing is lost, it can still be submitted.
+  useEffect(() => {
+    if (finished) return;
+    const end = Date.now() + leftNow.current * 1000;
+    const t = setInterval(() => {
+      const s = Math.max(0, Math.round((end - Date.now()) / 1000));
+      setLeft(s);
+      if (s === 0) {
+        clearInterval(t);
+        setP((v) => (v.phase === "test" ? { ...v, phase: "review" } : v));
+      }
+    }, 1000);
+    return () => clearInterval(t);
+  }, [finished]);
+
+  const clearSelection = () => {
+    window.getSelection()?.removeAllRanges();
+    setSelected(null);
+    setPicked(null);
   };
 
-  // The countdown. At zero the set moves to Check Your Work; nothing is lost, it can still be submitted.
-  useEffect(() => {
-    if (phase === "results") return;
-    const t = setInterval(() => setLeft((s) => {
-      if (s <= 1) {
-        clearInterval(t);
-        setPhase((p) => (p === "test" ? "review" : p));
-        return 0;
-      }
-      return s - 1;
-    }), 1000);
-    return () => clearInterval(t);
-  }, [phase]);
-
-  // Leaving mid-set asks first, as answers aren't saved until Submit.
-  useEffect(() => {
-    if (phase === "results") return;
-    const warn = (e: BeforeUnloadEvent) => e.preventDefault();
-    window.addEventListener("beforeunload", warn);
-    return () => window.removeEventListener("beforeunload", warn);
-  }, [phase]);
-
-  const answer = (id: string, value: string) => setAnswers((a) => ({ ...a, [id]: value }));
-  const toggleMark = (id: string) => setMarked((m) => {
-    const next = new Set(m);
-    if (next.has(id)) next.delete(id); else next.add(id);
-    return next;
+  useTextSelection((s) => {
+    setSelected(s);
+    if (s) setPicked(null);
   });
-  const toggleCross = (id: string, label: string) => setCrossed((c) => {
-    const list = c[id] ?? [];
-    return { ...c, [id]: list.includes(label) ? list.filter((l) => l !== label) : [...list, label] };
-  });
+
+  const closeOverlays = () => {
+    setNavOpen(false);
+    setMoreOpen(false);
+    setPicked(null);
+  };
+
+  const goTo = (i: number, to: PracticePhase = "test") => {
+    bank();
+    clearSelection();
+    closeOverlays();
+    setSheet((s) => (s === "list" ? s : null));
+    setP((v) => ({ ...v, index: i, phase: to }));
+  };
+
+  const answer = (value: string) => setP((v) => ({ ...v, answers: { ...v.answers, [q.id]: value } }));
+  const pick = (label: string) => setP((v) => pickChoice(v, q.id, label));
+  const cross = (label: string) => setP((v) => toggleCrossed(v, q.id, label));
+  const toggleMark = () => setP((v) => ({
+    ...v,
+    marked: v.marked.includes(q.id) ? v.marked.filter((id) => id !== q.id) : [...v.marked, q.id],
+  }));
+  const toggleEliminator = () => setP((v) => ({ ...v, eliminator: !v.eliminator }));
+  const setSplit = (value: number) => setP((v) => ({ ...v, split: clampSplit(value) }));
+
+  const setNotes = (id: string, change: (list: Annotation[]) => Annotation[]) => setP((v) => ({
+    ...v,
+    annotations: { ...v.annotations, [id]: change(v.annotations[id] ?? []) },
+  }));
+
+  /** A new highlight from the selection; returns it so a note can go straight onto it. */
+  const highlight = (color: HighlightColor, underline: boolean): Annotation | null => {
+    if (!selected) return null;
+    const { area, start: from, end, quote } = selected;
+    const added: Annotation = {
+      id: crypto.randomUUID(), area, start: from, end, quote, color, underline, note: "",
+    };
+    setNotes(q.id, (list) => addAnnotation(list, added));
+    return added;
+  };
+
+  const active = picked ? notes.find((a) => a.id === picked.id) ?? null : null;
+  const editing = sheet && sheet !== "list" ? notes.find((a) => a.id === sheet.note) ?? null : null;
+
+  const toolbar = selected ? {
+    rect: selected.rect, color: null, underline: false, existing: false,
+    onColor: (c: HighlightColor) => { highlight(c, false); clearSelection(); },
+    onUnderline: () => { highlight("none", true); clearSelection(); },
+    onNote: () => {
+      const added = highlight("yellow", false);
+      clearSelection();
+      if (added) setSheet({ note: added.id });
+    },
+    onDelete: () => {},
+  } : active && picked ? {
+    rect: picked.rect, color: active.color, underline: active.underline, existing: true,
+    onColor: (c: HighlightColor) => setNotes(q.id, (list) => updateAnnotation(list, active.id, { color: active.color === c ? "none" : c, underline: active.color === c ? true : active.underline })),
+    onUnderline: () => setNotes(q.id, (list) => updateAnnotation(list, active.id, { underline: !active.underline })),
+    onNote: () => { setSheet({ note: active.id }); setPicked(null); },
+    onDelete: () => { setNotes(q.id, (list) => removeAnnotation(list, active.id)); setPicked(null); },
+  } : null;
+
+  const noteRows = questions.flatMap((x, i) => (p.annotations[x.id] ?? []).map((annotation) => ({ number: i + 1, index: i, annotation })));
 
   const submit = async () => {
     bank();
     const seconds = Object.fromEntries(questions.map((x) => [x.id, Math.round(spent.current[x.id] ?? 0)]));
     setTimes(seconds);
-    setPhase("results");
+    setFinished(true);
     setSaved("saving");
+    // Off the device first: a set that reached the server must not be offered back for a second go.
+    forget();
     try {
       const res = await fetch("/api/sat/attempts", {
         method: "POST",
+        keepalive: true,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           attempts: questions.map((x) => ({
@@ -132,19 +254,64 @@ export default function BluebookPractice({ questions, missing }: { questions: Sa
         }),
       });
       const data = await res.json().catch(() => ({}));
+      if (!res.ok) store();
       setSaved(res.ok ? "saved" : (data.error ?? "Results couldn't be saved."));
     } catch {
+      store();
       setSaved("Results couldn't be saved — check your connection.");
     }
   };
+
+  const exit = () => {
+    store();
+    router.push("/study/sat");
+  };
+  const discard = () => {
+    // Nothing may write it back on the way out.
+    setFinished(true);
+    forget();
+    router.push("/study/sat");
+  };
+
+  // The keyboard, away from anything being typed into.
+  useEffect(() => {
+    if (finished) return;
+    const onKey = (e: KeyboardEvent) => {
+      const typing = (e.target as Element).closest?.("input, textarea, select");
+      if (e.key === "Escape") {
+        if (dialog) setDialog(null);
+        else if (navOpen || moreOpen || picked) closeOverlays();
+        else if (sheet) setSheet(null);
+        else if (selected) clearSelection();
+        return;
+      }
+      if (typing || dialog || e.ctrlKey || e.metaKey || e.altKey) return;
+      const key = e.key.toLowerCase();
+      if (phase !== "test") return;
+      if (e.key === "ArrowRight") { if (index < questions.length - 1) goTo(index + 1); else goTo(index, "review"); }
+      else if (e.key === "ArrowLeft") { if (index > 0) goTo(index - 1); }
+      else if (key === "m") toggleMark();
+      else if (key === "q") setNavOpen((o) => !o);
+      else if (key === "h") setSheet((s) => (s === "list" ? null : "list"));
+      else if (key === "x" && q.type === "mcq") toggleEliminator();
+      else if (q.type === "mcq" && /^[a-d]$/.test(key)) {
+        const label = key.toUpperCase();
+        if (!q.options.some((o) => o.label === label)) return;
+        if (e.shiftKey) cross(label); else pick(label);
+      } else return;
+      e.preventDefault();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  });
 
   // Dragging the divider between passage and question.
   const body = useRef<HTMLDivElement>(null);
   const drag = (e: React.PointerEvent) => {
     const box = body.current?.getBoundingClientRect();
     if (!box) return;
-    (e.target as Element).setPointerCapture(e.pointerId);
-    const move = (ev: PointerEvent) => setSplit(Math.min(75, Math.max(25, ((ev.clientX - box.left) / box.width) * 100)));
+    e.currentTarget.setPointerCapture(e.pointerId);
+    const move = (ev: PointerEvent) => setSplit(((ev.clientX - box.left) / box.width) * 100);
     const up = () => {
       window.removeEventListener("pointermove", move);
       window.removeEventListener("pointerup", up);
@@ -153,59 +320,79 @@ export default function BluebookPractice({ questions, missing }: { questions: Sa
     window.addEventListener("pointerup", up);
   };
 
-  if (phase === "results") {
+  // Discarded: on the way out, with nothing to show.
+  if (finished && saved === "idle") return null;
+  if (finished) {
     return (
       <Results questions={questions} answers={answers} spent={times} saved={saved}
-        reviewing={reviewing} onReview={setReviewing} />
+        reviewing={reviewing} onReview={setReviewing} onRetry={submit} />
     );
   }
 
-  const title = questions.every((x) => x.section === q.section)
-    ? SECTION_LABELS[q.section]
-    : "Reading and Writing and Math";
+  const section = questions.every((x) => x.section === q.section) ? `Section ${SECTION_NUMBER[q.section]}: ${SECTION_LABELS[q.section]}` : `Practice: ${SECTION_LABELS[q.section]}`;
+  const clockShown = !clockHidden || (limit > 600 && left <= FINAL_STRETCH);
+  const lastMinutes = limit > 600 && left <= FINAL_STRETCH && left > FINAL_STRETCH - 8;
+  // Reading and Writing, and a typed answer with its directions, take two panes; Math takes one.
+  const twoPanes = q.type === "spr" || (q.section === "rw" && Boolean(q.stimulus));
+  const inRightPane = q.section === "rw" ? "" : q.stimulus;
+
+  const annotated = (area: AnnotationArea, html: string, className: string) => (
+    <AnnotatedHtml key={`${q.id}:${area}`} area={area} html={html} annotations={notes} activeId={picked?.id ?? editing?.id ?? null}
+      className={className} onPick={(id, rect) => setPicked({ id, rect })} />
+  );
 
   return (
-    <div className="fixed inset-0 flex flex-col bg-white text-gray-900">
+    <div className="bb fixed inset-0 flex flex-col">
       {/* Top bar: section and directions, the clock, the tools. */}
-      <header className="relative grid grid-cols-[1fr_auto_1fr] items-center px-4 sm:px-6 h-16 flex-shrink-0">
+      <header className="bb-bar grid grid-cols-[1fr_auto_1fr] items-center gap-2">
         <div className="min-w-0">
-          <p className="text-sm sm:text-base font-bold truncate font-ui">Practice: {title}</p>
-          <button type="button" onClick={() => setTool(tool === "directions" ? null : "directions")}
-            className="inline-flex items-center gap-1 text-sm font-semibold text-gray-700 hover:text-gray-900">
+          <p className="bb-section-title truncate">{section}</p>
+          <button type="button" onClick={() => setDialog("directions")} className="bb-directions">
             Directions <ChevronDown className="w-4 h-4" />
           </button>
         </div>
         <div className="flex flex-col items-center">
-          {clockHidden ? (
-            <Clock className="w-5 h-5" aria-label="Clock hidden" />
+          {clockShown ? (
+            <span className={`bb-clock ${limit > 600 && left <= FINAL_STRETCH ? "text-red-700" : ""}`} role="timer" aria-live="off">{clock(left)}</span>
           ) : (
-            <span className={`text-lg font-bold tabular-nums ${left <= 300 && limit > 600 ? "text-red-700" : ""} font-ui`}
-              role="timer" aria-live="off">{clock(left)}</span>
+            <Clock className="w-5 h-5 my-0.5" aria-label="Clock hidden" />
           )}
-          <button type="button" onClick={() => setClockHidden((h) => !h)}
-            className="mt-0.5 px-2.5 py-px text-xs border border-gray-400 rounded-full hover:bg-gray-100">
-            {clockHidden ? "Show" : "Hide"}
-          </button>
+          {!(limit > 600 && left <= FINAL_STRETCH) && (
+            <button type="button" onClick={() => setClockHidden((h) => !h)} className="bb-clock-toggle">
+              {clockHidden ? "Show" : "Hide"}
+            </button>
+          )}
         </div>
-        <div className="flex justify-end gap-1 sm:gap-3">
+        <div className="relative flex justify-end gap-0.5 sm:gap-2">
+          <ToolButton icon={Highlighter} label="Highlights & Notes" active={sheet === "list"} onClick={() => setSheet((s) => (s === "list" ? null : "list"))} />
           {hasMath && (
             <>
-              <ToolButton icon={Calculator} label="Calculator" active={tool === "calculator"} onClick={() => setTool(tool === "calculator" ? null : "calculator")} />
-              <ToolButton icon={Ruler} label="Reference" active={tool === "reference"} onClick={() => setTool(tool === "reference" ? null : "reference")} />
+              <ToolButton icon={Calculator} label="Calculator" active={calculator === "open"} onClick={() => setCalculator((c) => (c === "open" ? "closed" : "open"))} />
+              <ToolButton icon={Ruler} label="Reference" active={dialog === "reference"} onClick={() => setDialog(dialog === "reference" ? null : "reference")} />
             </>
           )}
-          <Link href="/study/sat" className="flex flex-col items-center px-2 py-1 text-xs font-semibold text-gray-700 hover:text-gray-900 font-ui">
-            <MoreVertical className="w-5 h-5" />
-            Exit
-          </Link>
+          <ToolButton icon={MoreVertical} label="More" active={moreOpen} onClick={() => setMoreOpen((o) => !o)} />
+          {moreOpen && (
+            <div role="menu" className="bb-menu">
+              <button type="button" role="menuitem" onClick={() => { setMoreOpen(false); setDialog("shortcuts"); }}>
+                <Keyboard className="w-4 h-4" /> Keyboard Shortcuts
+              </button>
+              <button type="button" role="menuitem" onClick={() => { setMoreOpen(false); setDialog("exit"); }}>
+                <LogOut className="w-4 h-4" /> Exit the Practice
+              </button>
+            </div>
+          )}
         </div>
       </header>
-      <div className="border-b-2 border-dashed border-gray-300" />
+      <div className="bb-stripe" />
 
-      {tool === "directions" && <DirectionsPanel section={q.section} onClose={() => setTool(null)} />}
-      {tool === "reference" && <ReferenceSheet onClose={() => setTool(null)} />}
-      {tool === "calculator" && <CalculatorPanel onClose={() => setTool(null)} />}
+      {dialog === "directions" && <DirectionsPanel section={q.section} onClose={() => setDialog(null)} />}
+      {dialog === "shortcuts" && <ShortcutsPanel onClose={() => setDialog(null)} />}
+      {dialog === "exit" && <ExitDialog onStay={() => setDialog(null)} onLeave={exit} onDiscard={discard} />}
+      {dialog === "reference" && <ReferenceSheet onClose={() => setDialog(null)} />}
+      {calculator !== "never" && <CalculatorPanel open={calculator === "open"} onClose={() => setCalculator("closed")} />}
 
+      {lastMinutes && <p role="status" className="bb-notice">5 minutes remaining.</p>}
       {missing > 0 && phase === "test" && index === 0 && (
         <p className="px-6 py-2 text-xs text-amber-800 bg-amber-50">
           {missing} question{missing === 1 ? "" : "s"} couldn&apos;t be loaded from the question bank and {missing === 1 ? "was" : "were"} left out.
@@ -213,28 +400,33 @@ export default function BluebookPractice({ questions, missing }: { questions: Sa
       )}
 
       {phase === "review" ? (
-        <CheckYourWork questions={questions} answers={answers} marked={marked} timeUp={left === 0} onPick={goTo} />
+        <CheckYourWork questions={questions} section={section} answers={answers} marked={marked} timeUp={left === 0} onPick={(i) => goTo(i)} />
       ) : (
-        <div ref={body} className="flex-1 min-h-0 flex flex-col md:flex-row">
-          {(q.stimulus || q.type === "spr") && (
+        <div ref={body} className="bb-body flex-1 min-h-0 flex flex-col md:flex-row">
+          {twoPanes && (
             <>
-              <section className="md:h-full overflow-y-auto px-6 sm:px-10 py-8 border-b md:border-b-0 border-gray-200 max-md:max-h-[45%]"
-                style={{ flexBasis: `${split}%` }} aria-label="Passage">
-                {q.stimulus
-                  ? <div className="sat-content" dangerouslySetInnerHTML={{ __html: q.stimulus }} />
-                  : <SprDirections />}
+              <section className="bb-pane md:h-full" style={{ "--bb-split": `${split}%` } as React.CSSProperties} aria-label="Passage" data-side="left">
+                {q.section === "rw" ? annotated("stimulus", q.stimulus, "sat-content") : <SprDirections />}
               </section>
-              <div onPointerDown={drag} role="separator" aria-orientation="vertical"
-                className="hidden md:flex w-2 cursor-col-resize items-center justify-center bg-gray-100 hover:bg-gray-200 select-none touch-none">
-                <span className="h-8 w-0.5 rounded bg-gray-500" />
+              <div onPointerDown={drag} role="separator" aria-orientation="vertical" aria-label="Resize passage" tabIndex={0}
+                aria-valuenow={Math.round(split)} aria-valuemin={25} aria-valuemax={75}
+                onKeyDown={(e) => {
+                  if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setSplit(split + (e.key === "ArrowLeft" ? -4 : 4));
+                }}
+                className="bb-divider">
+                <span><ChevronLeft className="w-3 h-3" /><ChevronRight className="w-3 h-3" /></span>
               </div>
             </>
           )}
-          <section className="flex-1 min-w-0 overflow-y-auto px-6 sm:px-10 py-6" aria-label="Question">
-            <div className={q.stimulus || q.type === "spr" ? "" : "max-w-2xl mx-auto"}>
-              <QuestionStrip number={index + 1} marked={marked.has(q.id)} onMark={() => toggleMark(q.id)}
-                eliminator={eliminator} onEliminator={q.type === "mcq" ? () => setEliminator((e) => !e) : undefined} />
-              <div className="sat-content mt-5" dangerouslySetInnerHTML={{ __html: q.stem }} />
+          <section className="bb-pane flex-1 min-w-0" aria-label="Question" data-side={twoPanes ? "right" : "single"}>
+            <div className={twoPanes ? "" : "bb-single"}>
+              <QuestionStrip number={index + 1} marked={marked.has(q.id)} onMark={toggleMark}
+                eliminator={eliminator} onEliminator={q.type === "mcq" ? toggleEliminator : undefined} />
+              {inRightPane && annotated("stimulus", inRightPane, "sat-content mt-5")}
+              {annotated("stem", q.stem, "sat-content mt-5")}
               {q.type === "mcq" ? (
                 <div className="mt-5 space-y-3" role="radiogroup" aria-label={`Question ${index + 1} answers`}>
                   {q.options.map((o) => (
@@ -242,16 +434,15 @@ export default function BluebookPractice({ questions, missing }: { questions: Sa
                       selected={answers[q.id] === o.label}
                       crossed={(crossed[q.id] ?? []).includes(o.label)}
                       eliminator={eliminator}
-                      onSelect={() => answer(q.id, o.label)}
-                      onCross={() => toggleCross(q.id, o.label)} />
+                      onSelect={() => pick(o.label)}
+                      onCross={() => cross(o.label)} />
                   ))}
                 </div>
               ) : (
                 <div className="mt-6">
-                  <input value={answers[q.id] ?? ""} onChange={(e) => answer(q.id, cleanTyped(e.target.value))}
-                    inputMode="text" autoComplete="off" aria-label={`Answer to question ${index + 1}`}
-                    className="w-40 border border-gray-900 rounded-md px-3 py-2 text-lg tabular-nums font-ui" />
-                  <p className="mt-3 text-sm text-gray-700 font-ui">
+                  <input value={answers[q.id] ?? ""} onChange={(e) => answer(cleanTyped(e.target.value))}
+                    inputMode="text" autoComplete="off" aria-label={`Answer to question ${index + 1}`} className="bb-typed" />
+                  <p className="mt-3 text-sm">
                     Answer Preview: <span className="font-bold">{answers[q.id] || ""}</span>
                   </p>
                 </div>
@@ -261,33 +452,46 @@ export default function BluebookPractice({ questions, missing }: { questions: Sa
         </div>
       )}
 
-      <div className="border-t-2 border-dashed border-gray-300" />
+      {toolbar && phase === "test" && (
+        <HighlightToolbar {...toolbar} onClose={clearSelection} />
+      )}
+      {sheet === "list" && (
+        <NotesList rows={noteRows} onClose={() => setSheet(null)}
+          onOpen={(i, a) => { if (i !== index) goTo(i); setSheet({ note: a.id }); }}
+          onDelete={(i, id) => setNotes(questions[i].id, (list) => removeAnnotation(list, id))} />
+      )}
+      {editing && (
+        <NotePanel key={editing.id} annotation={editing} onClose={() => setSheet(null)}
+          onSave={(note) => { setNotes(q.id, (list) => updateAnnotation(list, editing.id, { note })); setSheet(null); }}
+          onDelete={() => { setNotes(q.id, (list) => removeAnnotation(list, editing.id)); setSheet(null); }} />
+      )}
+
+      <div className="bb-stripe" />
       {/* Bottom bar: the navigator and Back / Next. */}
-      <footer className="relative grid grid-cols-[1fr_auto_1fr] items-center px-4 sm:px-6 h-16 flex-shrink-0 font-ui">
-        <span className="text-sm font-semibold text-gray-700 truncate">SAT Practice</span>
+      <footer className="bb-bar bb-foot relative grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+        <span className="text-sm font-medium truncate max-sm:hidden">SAT Practice</span>
         {phase === "test" ? (
-          <button type="button" onClick={() => setNavOpen((o) => !o)} aria-expanded={navOpen}
-            className="inline-flex items-center gap-1.5 bg-gray-900 text-white px-4 py-1.5 rounded-md text-sm font-bold">
+          <button type="button" onClick={() => setNavOpen((o) => !o)} aria-expanded={navOpen} className="bb-question-button max-sm:col-start-1 max-sm:justify-self-start">
             Question {index + 1} of {questions.length} {navOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
           </button>
         ) : <span />}
-        <div className="flex justify-end gap-2">
+        <div className="flex justify-end gap-2 max-sm:col-span-2">
           {phase === "review" ? (
             <>
-              <NavButton onClick={() => goTo(questions.length - 1)}>Back</NavButton>
-              <NavButton onClick={submit}>Submit</NavButton>
+              <button type="button" onClick={() => goTo(questions.length - 1)} className="bb-button">Back</button>
+              <button type="button" onClick={submit} className="bb-button">Submit</button>
             </>
           ) : (
             <>
-              {index > 0 && <NavButton onClick={() => goTo(index - 1)}>Back</NavButton>}
-              <NavButton onClick={() => (index < questions.length - 1 ? goTo(index + 1) : (bank(), setPhase("review")))}>Next</NavButton>
+              {index > 0 && <button type="button" onClick={() => goTo(index - 1)} className="bb-button">Back</button>}
+              <button type="button" onClick={() => (index < questions.length - 1 ? goTo(index + 1) : goTo(index, "review"))} className="bb-button">Next</button>
             </>
           )}
         </div>
 
         {navOpen && phase === "test" && (
-          <Navigator questions={questions} index={index} answers={answers} marked={marked}
-            onPick={goTo} onReview={() => { bank(); setNavOpen(false); setPhase("review"); }} onClose={() => setNavOpen(false)} />
+          <Navigator questions={questions} section={section} index={index} answers={answers} marked={marked}
+            onPick={(i) => goTo(i)} onReview={() => goTo(index, "review")} onClose={() => setNavOpen(false)} />
         )}
       </footer>
     </div>
@@ -298,19 +502,9 @@ function ToolButton({ icon: Icon, label, active, onClick }: {
   icon: typeof Calculator; label: string; active: boolean; onClick: () => void;
 }) {
   return (
-    <button type="button" onClick={onClick} aria-pressed={active}
-      className={`flex flex-col items-center px-2 py-1 text-xs rounded-md ${active ? "bg-gray-100 text-gray-900" : "text-gray-700 hover:text-gray-900"}`}>
+    <button type="button" onClick={onClick} aria-pressed={active} aria-label={label} className="bb-tool">
       <Icon className="w-5 h-5" />
-      {label}
-    </button>
-  );
-}
-
-function NavButton({ onClick, children }: { onClick: () => void; children: React.ReactNode }) {
-  return (
-    <button type="button" onClick={onClick}
-      className="bg-gray-900 text-white px-5 py-2 rounded-full text-sm font-bold hover:bg-gray-700">
-      {children}
+      <span className="max-sm:hidden">{label}</span>
     </button>
   );
 }
@@ -319,17 +513,15 @@ function QuestionStrip({ number, marked, onMark, eliminator, onEliminator }: {
   number: number; marked: boolean; onMark: () => void; eliminator: boolean; onEliminator?: () => void;
 }) {
   return (
-    <div className="flex items-center gap-3 bg-gray-100 border-b-2 border-dashed border-gray-300 font-ui">
-      <span className="bg-gray-900 text-white w-8 h-8 flex items-center justify-center text-sm font-bold">{number}</span>
-      <button type="button" onClick={onMark} aria-pressed={marked}
-        className="inline-flex items-center gap-1.5 text-sm font-semibold text-gray-800 hover:text-gray-900">
-        <Bookmark className={`w-4 h-4 ${marked ? "fill-red-700 text-red-700" : ""}`} />
+    <div className="bb-strip">
+      <span className="bb-strip-number">{number}</span>
+      <button type="button" onClick={onMark} aria-pressed={marked} className="bb-mark-review">
+        <Bookmark className={`w-4 h-4 ${marked ? "fill-[var(--bb-flag)] text-[var(--bb-flag)]" : ""}`} />
         Mark for Review
       </button>
       {onEliminator && (
-        <button type="button" onClick={onEliminator} aria-pressed={eliminator} title="Cross out answer choices"
-          className={`ml-auto mr-1 my-1 px-1.5 py-0.5 text-xs font-bold border rounded ${eliminator ? "bg-gray-900 text-white border-gray-900" : "border-gray-700 text-gray-800"}`}>
-          <span className="line-through">ABC</span>
+        <button type="button" onClick={onEliminator} aria-pressed={eliminator} aria-label="Answer eliminator" title="Cross out answer choices" className="bb-eliminator">
+          <span>ABC</span>
         </button>
       )}
     </div>
@@ -342,20 +534,14 @@ function Choice({ label, html, selected, crossed, eliminator, onSelect, onCross 
 }) {
   return (
     <div className="flex items-center gap-3">
-      <button type="button" role="radio" aria-checked={selected} onClick={onSelect} disabled={crossed}
-        className={`relative flex-1 flex items-center gap-4 text-left rounded-lg px-3 py-3 transition-colors ${
-          selected ? "border-[3px] border-gray-900 -m-px" : "border border-gray-700 hover:bg-gray-50"
-        } ${crossed ? "opacity-50" : ""}`}>
-        <span className={`flex-shrink-0 w-7 h-7 rounded-full border-2 flex items-center justify-center text-sm font-bold ${
-          selected ? "bg-gray-900 border-gray-900 text-white" : "border-gray-900"
-        } font-ui`}>{label}</span>
+      <button type="button" role="radio" aria-checked={selected} onClick={onSelect}
+        className="bb-choice" data-selected={selected ? "" : undefined} data-crossed={crossed ? "" : undefined}>
+        <span className="bb-choice-letter">{label}</span>
         <span className="sat-content sat-choice min-w-0" dangerouslySetInnerHTML={{ __html: html }} />
-        {crossed && <span aria-hidden className="absolute left-2 right-2 top-1/2 h-0.5 bg-gray-900" />}
       </button>
       {eliminator && (
-        <button type="button" onClick={onCross} aria-label={crossed ? `Undo crossing out ${label}` : `Cross out ${label}`}
-          className="flex-shrink-0 text-xs font-bold underline underline-offset-2 font-ui">
-          {crossed ? "Undo" : <span className="inline-flex w-6 h-6 rounded-full border border-gray-900 items-center justify-center line-through">{label}</span>}
+        <button type="button" onClick={onCross} aria-label={crossed ? `Undo crossing out ${label}` : `Cross out ${label}`} className="bb-cross">
+          {crossed ? <span className="underline underline-offset-2">Undo</span> : <span className="bb-cross-letter">{label}</span>}
         </button>
       )}
     </div>
@@ -378,28 +564,35 @@ function SprDirections() {
   );
 }
 
-function Navigator({ questions, index, answers, marked, onPick, onReview, onClose }: {
-  questions: SatQuestion[]; index: number; answers: Record<string, string>; marked: Set<string>;
+function Legend() {
+  return (
+    <div className="bb-legend">
+      <span><MapPin className="w-3.5 h-3.5" /> Current</span>
+      <span><i className="bb-legend-box" /> Unanswered</span>
+      <span><Bookmark className="w-3.5 h-3.5 fill-[var(--bb-flag)] text-[var(--bb-flag)]" /> For Review</span>
+    </div>
+  );
+}
+
+function Navigator({ questions, section, index, answers, marked, onPick, onReview, onClose }: {
+  questions: SatQuestion[]; section: string; index: number; answers: Record<string, string>; marked: Set<string>;
   onPick: (i: number) => void; onReview: () => void; onClose: () => void;
 }) {
   return (
-    <div role="dialog" aria-label="Questions"
-      className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-[min(32rem,calc(100vw-2rem))] bg-white border border-gray-300 rounded-lg shadow-xl p-5">
-      <div className="flex items-center justify-between">
-        <p className="font-bold">Practice Questions</p>
-        <button type="button" onClick={onClose} aria-label="Close"><X className="w-5 h-5" /></button>
+    <>
+      <div className="fixed inset-0 z-30" onClick={onClose} aria-hidden />
+      <div role="dialog" aria-label="Questions" className="bb-navigator">
+        <div className="flex items-center justify-between gap-3">
+          <p className="font-bold">{section} Questions</p>
+          <button type="button" onClick={onClose} aria-label="Close"><X className="w-5 h-5" /></button>
+        </div>
+        <Legend />
+        <QuestionGrid questions={questions} index={index} answers={answers} marked={marked} onPick={onPick} />
+        <div className="mt-5 text-center">
+          <button type="button" onClick={onReview} className="bb-button-outline">Go to Review Page</button>
+        </div>
       </div>
-      <div className="flex justify-center gap-5 my-3 py-2 border-y border-gray-200 text-xs text-gray-700">
-        <span className="inline-flex items-center gap-1"><MapPin className="w-3.5 h-3.5" /> Current</span>
-        <span className="inline-flex items-center gap-1"><span className="w-3.5 h-3.5 border border-dashed border-gray-700" /> Unanswered</span>
-        <span className="inline-flex items-center gap-1"><Bookmark className="w-3.5 h-3.5 fill-red-700 text-red-700" /> For Review</span>
-      </div>
-      <QuestionGrid questions={questions} index={index} answers={answers} marked={marked} onPick={onPick} />
-      <div className="mt-4 text-center">
-        <button type="button" onClick={onReview}
-          className="px-4 py-1.5 border border-gray-900 rounded-full text-sm font-bold hover:bg-gray-50">Go to Review Page</button>
-      </div>
-    </div>
+    </>
   );
 }
 
@@ -408,15 +601,15 @@ function QuestionGrid({ questions, index, answers, marked, onPick }: {
   onPick: (i: number) => void;
 }) {
   return (
-    <div className="flex flex-wrap justify-center gap-3">
+    <div className="bb-grid">
       {questions.map((x, i) => {
         const done = Boolean(answers[x.id]);
         return (
-          <button key={x.id} type="button" onClick={() => onPick(i)} aria-label={`Question ${i + 1}${done ? ", answered" : ", unanswered"}${marked.has(x.id) ? ", marked for review" : ""}`}
-            className={`relative w-9 h-9 text-sm font-bold ${done ? "bg-gray-900 text-white" : "border border-dashed border-gray-700 text-gray-900"}`}>
+          <button key={x.id} type="button" onClick={() => onPick(i)} data-done={done ? "" : undefined}
+            aria-label={`Question ${i + 1}${done ? ", answered" : ", unanswered"}${marked.has(x.id) ? ", marked for review" : ""}${i === index ? ", current" : ""}`}>
             {i + 1}
-            {i === index && <MapPin className="absolute -top-4 left-1/2 -translate-x-1/2 w-3.5 h-3.5 text-gray-900" />}
-            {marked.has(x.id) && <Bookmark className="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 fill-red-700 text-red-700" />}
+            {i === index && <MapPin className="bb-grid-pin" />}
+            {marked.has(x.id) && <Bookmark className="bb-grid-flag" />}
           </button>
         );
       })}
@@ -424,22 +617,26 @@ function QuestionGrid({ questions, index, answers, marked, onPick }: {
   );
 }
 
-function CheckYourWork({ questions, answers, marked, timeUp, onPick }: {
-  questions: SatQuestion[]; answers: Record<string, string>; marked: Set<string>; timeUp: boolean;
+function CheckYourWork({ questions, section, answers, marked, timeUp, onPick }: {
+  questions: SatQuestion[]; section: string; answers: Record<string, string>; marked: Set<string>; timeUp: boolean;
   onPick: (i: number) => void;
 }) {
   const open = questions.filter((x) => !answers[x.id]).length;
   return (
-    <div className="flex-1 overflow-y-auto px-6 py-10">
-      <div className="max-w-2xl mx-auto text-center">
-        <h1 className="text-3xl">Check Your Work</h1>
-        <p className="mt-3 text-[15px] text-gray-700">
+    <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-10">
+      <div className="max-w-3xl mx-auto text-center">
+        <h1 className="bb-review-title">Check Your Work</h1>
+        <p className="mt-3 text-[15px]">
           {timeUp ? "Time's up. " : ""}
-          On test day you can&apos;t move on until time runs out. Here you can go back to any question,
-          or Submit when you&apos;re ready.{open > 0 ? ` ${open} question${open === 1 ? " is" : "s are"} unanswered.` : ""}
+          On test day, you won&apos;t be able to move on until time runs out. For this practice you can go
+          back to any question, or Submit when you&apos;re ready.
         </p>
-        <div className="mt-8 bg-white border border-gray-300 rounded-lg p-6 font-ui">
-          <p className="font-bold mb-5">Practice Questions</p>
+        <div className="bb-review-card">
+          <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-1 text-left">
+            <p className="font-bold">{section} Questions</p>
+            <p className="text-sm">{open} Unanswered · {questions.filter((x) => marked.has(x.id)).length} For Review</p>
+          </div>
+          <Legend />
           <QuestionGrid questions={questions} index={null} answers={answers} marked={marked} onPick={onPick} />
         </div>
       </div>
@@ -447,9 +644,9 @@ function CheckYourWork({ questions, answers, marked, timeUp, onPick }: {
   );
 }
 
-function Results({ questions, answers, spent, saved, reviewing, onReview }: {
+function Results({ questions, answers, spent, saved, reviewing, onReview, onRetry }: {
   questions: SatQuestion[]; answers: Record<string, string>; spent: Record<string, number>; saved: string;
-  reviewing: number | null; onReview: (i: number | null) => void;
+  reviewing: number | null; onReview: (i: number | null) => void; onRetry: () => void;
 }) {
   const marks = questions.map((x) => isCorrect(x, answers[x.id]));
   const keyed = marks.filter((m) => m !== null).length;
@@ -511,7 +708,10 @@ function Results({ questions, answers, spent, saved, reviewing, onReview }: {
         <p className="text-xs font-bold uppercase tracking-wide text-gray-500">Practice results</p>
         <h1 className="mt-2 text-4xl">{right} of {keyed} correct</h1>
         <p className="mt-2 text-sm text-gray-600 font-ui">
-          {saved === "saving" ? "Saving…" : saved === "saved" ? "Saved to your Question Bank history." : saved === "idle" ? "" : saved}
+          {saved === "saving" ? "Saving…" : saved === "saved" ? "Saved to your Question Bank history." : saved}
+          {saved !== "saving" && saved !== "saved" && (
+            <button type="button" onClick={onRetry} className="ml-2 underline underline-offset-4">Try again</button>
+          )}
         </p>
         <ul className="mt-8 border-t border-gray-900 divide-y divide-gray-200">
           {questions.map((x, i) => (
