@@ -40,7 +40,7 @@ See `prisma/manual-migrations/README.md`. Every new table needs
 ## Authentication
 
 `proxy.ts` (the Next 16 name for what used to be `middleware.ts`, and now on the Node.js
-runtime) guards every route except `/login`, `/api/auth` and the PWA install assets iOS fetches
+runtime) guards every route except `/login`, `/api/auth`, the cron keep-alive (below) and the PWA install assets iOS fetches
 unauthenticated. `/api/*` gets a 401 JSON rather than a redirect — redirecting an API caller
 produced a 200 that `fetch()` read as success, so forms hung on "Saving…" forever.
 
@@ -63,6 +63,14 @@ own `Authorization: Bearer <WIDGET_TOKEN>`: the same fail-closed check, for exac
 `POST /api/self-care/water` — so a widget can read the day, tick a meal and log water, and nothing
 else. A token of their own rather than the site password: Scriptable's Keychain is shared by every
 script on the phone.
+
+The third is Vercel Cron. Supabase's free plan pauses a project after about a week with no
+database activity (it took the site down on 2026-11-05), so `vercel.json` calls
+`GET /api/cron/keep-alive` once a day (06:00 UTC), which runs one `SELECT 1`. The proxy lets that
+exact path and method through without a session; the route checks
+`Authorization: Bearer <CRON_SECRET>` — the header Vercel Cron sends — with the same fail-closed
+check as `REPORT_TOKEN`, and answers 503 when the database does not, so the run shows as failed.
+`CRON_SECRET` must exist in Vercel's Production environment; crons run on production deployments only.
 
 ---
 
@@ -253,6 +261,7 @@ scriptable/             the phone widgets (Diet, Water) for the Scriptable app, 
 | `db.ts` | The Prisma singleton and its connection guard |
 | `session.ts` | HMAC session tokens, shared by middleware and route handlers |
 | `api-errors.ts` | `withErrors`, `readJson` |
+| `keep-alive.ts` | The daily keep-alive's bearer check and its answer; the query is passed in |
 | `dates.ts` | Date keys and the app timezone |
 | `study.ts` / `study-service.ts` | Session and XP rules (client-safe) / Prisma side |
 | `goals.ts` / `goal-schema.ts` | Weekly-goal arithmetic and its wording / the zod rule both goal routes share |
@@ -275,7 +284,7 @@ scriptable/             the phone widgets (Diet, Water) for the Scriptable app, 
 ## Testing
 
 `npm test` runs plain node scripts over the pure modules — date maths, the XP rule, the level
-curve, the vocabulary parser and question builder, the daily review, the report token, the SAT
+curve, the vocabulary parser and question builder, the daily review, the report token, the cron keep-alive's gate, the SAT
 Question Bank reader and marking, UCAT scores and lessons, workouts and their totals, the shopping
 rules (addresses, categories, line codes), the finance pots (carryover per source, balances), installment splits, and the meal plans' sums. `scripts/alias.mjs` teaches node the `@/` import alias, so a pure module can
 import another the same way the app does. There is no browser test suite; UI and schema changes are verified by running the app

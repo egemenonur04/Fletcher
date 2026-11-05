@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { KEEP_ALIVE_PATH } from "@/lib/keep-alive";
 import { REPORT_PATH, SESSION_COOKIE, verifyReportToken, verifySessionToken, verifyWidgetToken, widgetMayCall, widgetTokenRefusal } from "@/lib/session";
 
 const PUBLIC_PATHS = ["/login", "/api/auth"];
@@ -28,6 +29,10 @@ export async function proxy(request: NextRequest) {
 
   if (isPublic(pathname)) return NextResponse.next();
   if (pathname.startsWith("/_next")) return NextResponse.next();
+
+  // Vercel Cron has no session. It may reach the keep-alive — exact path, GET only — whose
+  // route checks `Authorization: Bearer <CRON_SECRET>` itself and fails closed without it.
+  if (pathname === KEEP_ALIVE_PATH && request.method === "GET") return NextResponse.next();
 
   const secret = process.env.AUTH_SECRET;
   const token = request.cookies.get(SESSION_COOKIE)?.value;
