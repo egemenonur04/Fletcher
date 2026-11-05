@@ -11,8 +11,8 @@ export default function manifest(): MetadataRoute.Manifest {
     // bouncing out to Safari.
     scope: "/",
     display: "standalone",
-    background_color: "#fafaf9",
-    theme_color: "#fafaf9",
+    background_color: "#ffffff",
+    theme_color: "#e6ebf7",
     orientation: "portrait",
     icons: [
       { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },

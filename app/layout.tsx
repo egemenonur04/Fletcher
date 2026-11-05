@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
-import { Libre_Franklin, Source_Serif_4 } from "next/font/google";
+import { Noto_Serif, Roboto } from "next/font/google";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import FloatingBackButton from "@/components/layout/FloatingBackButton";
 import ServiceWorkerRegistrar from "@/components/ServiceWorkerRegistrar";
@@ -10,9 +10,9 @@ import "./globals.css";
 import "./palette.css";
 import "./design.css";
 
-// Serif for text and headlines, Franklin for the furniture — see app/design.css.
-const serif = Source_Serif_4({ subsets: ["latin", "latin-ext"], variable: "--font-serif" });
-const franklin = Libre_Franklin({ subsets: ["latin", "latin-ext"], variable: "--font-franklin" });
+// Roboto for the site, Noto Serif for SAT passages and questions — see app/design.css.
+const serif = Noto_Serif({ subsets: ["latin", "latin-ext"], variable: "--font-bb-serif" });
+const sans = Roboto({ subsets: ["latin", "latin-ext"], weight: ["400", "500", "700"], variable: "--font-bb-sans" });
 
 export const metadata: Metadata = {
   title: "MyPortal",
@@ -25,14 +25,14 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#fafaf9",
+  themeColor: "#e6ebf7",
   // Lets the layout extend under the notch / home indicator when installed.
   viewportFit: "cover",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${serif.variable} ${franklin.variable} h-full antialiased`}>
+    <html lang="en" className={`${serif.variable} ${sans.variable} h-full antialiased`}>
       <body className="min-h-screen bg-gray-50">
         {children}
         {/* Follows the query string, so it suspends on its own instead of the whole page. */}
