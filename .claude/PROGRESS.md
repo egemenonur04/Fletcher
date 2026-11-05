@@ -6,6 +6,12 @@
 
 ## Done
 
+- [x] **The whole site in the Bluebook look** (asked 2026-11-05: buttons, pages and text everywhere
+      like the Bluebook interface). Replaces Paper: `docs/design/bluebook.md`, `scripts/palette.mjs`,
+      `app/design.css`; fonts moved to the root layout; the portal page is a top bar and cards. Owner
+      said PRs may be merged without asking (2026-11-05). Checked in a production build against a
+      throwaway Postgres: login, portal, SAT, Diet, Shopping, Finances seen; Study, GPA, UCAT,
+      vocabulary, Exercise, Progress and the expense log return 200 but weren't looked at closely.
 - [x] **SAT practice screen rebuilt after Bluebook** (asked 2026-11-05, in Turkish: the same as the
       Bluebook interface, with highlighting, notes and striking out answers). Its own look under
       `.bb` in `app/design.css` (Noto Serif, Roboto, Bluebook's blue; the Paper exception is in

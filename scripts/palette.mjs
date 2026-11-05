@@ -2,11 +2,11 @@
 //
 // Tailwind v4 draws every colour utility from a CSS variable (`bg-gray-900` is
 // `var(--color-gray-900)`), so redefining the variables restyles every page at once, without
-// touching a component. The look is a newspaper, after The New York Times (by way of
-// remarkable.com): a near-white page, white sheets, near-black ink. The gray ramp is written out by hand; every hue is generated from
-// one hue angle and a peak chroma along a light ramp (50 is a pale tint, 900 is dark). Most hues
-// are drained to a whisper of colour so the site reads black and white; red, green and amber keep
-// enough to still mean danger, done and warning.
+// touching a component. The look is the Bluebook test screen: a white page, ink a shade off black,
+// cool greys and one blue. The gray ramp is written out by hand; every hue is generated from one
+// hue angle and a peak chroma along a light ramp (50 is a pale tint, 900 is dark). Most hues stay
+// drained to near-grey so the blue is the only colour that acts; red, green and amber keep enough
+// to still mean danger, done and warning.
 //
 // Run after editing: node scripts/palette.mjs
 
@@ -20,8 +20,8 @@ const RAMP = {
   C: [0.12, 0.25, 0.45, 0.7, 0.9, 1, 0.95, 0.85, 0.72, 0.6, 0.45],
 };
 
-// 50 is the page, 200 a hairline, 500 secondary text, 900 the ink. White is a sheet of paper.
-const GRAY = ["#fafaf9", "#f2f2f0", "#dfdfdd", "#c7c7c5", "#a3a3a1", "#757573", "#5a5a58", "#434341", "#2c2c2b", "#121212", "#0a0a0a"];
+// 50 is the page, 200 a hairline, 500 secondary text, 900 the ink.
+const GRAY = ["#f8f9fc", "#f0f0f0", "#dfe3ea", "#c4c8d0", "#9fa3ab", "#6e7278", "#55585e", "#404247", "#2b2c30", "#1e1e1e", "#111111"];
 const WHITE = "#ffffff";
 
 // [hue angle, peak chroma]. A quiet hue is barely off-grey.
@@ -29,7 +29,7 @@ const QUIET = 0.025;
 const HUES = {
   red: [27, 0.14], orange: [50, QUIET], amber: [75, 0.1], yellow: [95, QUIET], lime: [125, QUIET],
   green: [150, 0.09], emerald: [160, QUIET], teal: [190, QUIET], cyan: [210, QUIET], sky: [230, QUIET],
-  blue: [255, QUIET], indigo: [275, QUIET], violet: [290, QUIET], purple: [305, QUIET], fuchsia: [330, QUIET],
+  blue: [268, 0.17], indigo: [268, 0.17], violet: [290, QUIET], purple: [305, QUIET], fuchsia: [330, QUIET],
   pink: [350, QUIET], rose: [15, 0.12],
 };
 

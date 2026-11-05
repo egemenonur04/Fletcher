@@ -63,10 +63,10 @@ the decision is the user's: product direction, or a tradeoff where either choice
 
 # Look
 
-The site has one look, **Paper**: a black-and-white newspaper, after The New York Times (owner,
-2026-10-28; it began after remarkable.com on 2026-10-27). Serif headlines and text, Franklin sans
-for controls. It replaced Soft Club, Acid, Early Cyber, Cyberdelia and Classic, which are gone.
+The site has one look, **Bluebook**: the digital SAT's test screen, everywhere (owner, 2026-11-05).
+Roboto for the site, Noto Serif for SAT passages, a pale blue bar on black dashes, blue pill buttons.
+It replaced Paper, the newspaper look.
 
-Before adding or changing anything that shows on the site, read `docs/design/paper.md` and follow
+Before adding or changing anything that shows on the site, read `docs/design/bluebook.md` and follow
 it. Colours go in `scripts/palette.mjs` (regenerate `app/palette.css`); everything else in
 `app/design.css`.

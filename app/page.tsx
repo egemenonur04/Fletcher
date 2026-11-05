@@ -20,27 +20,22 @@ export default function PortalPage() {
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
+      <header className="theme-header px-4 sm:px-7 py-5">
+        <h1 className="text-lg text-gray-900">My Portal</h1>
+      </header>
+      <p className="bb-banner">{dateline}</p>
       <main className="flex-1 px-4 sm:px-8 py-8 sm:py-12">
-        <div className="max-w-5xl mx-auto">
-          <header className="text-center">
-            <h1 className="text-5xl sm:text-7xl tracking-tight text-gray-900">My Portal</h1>
-            <div className="mt-4 masthead-rule" />
-            <p className="py-2 text-xs uppercase tracking-wide text-gray-700">{dateline}</p>
-            <div className="border-t border-gray-900" />
-          </header>
-
-          <ul className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 border-l border-t border-gray-200">
-            {SECTIONS.map(({ href, label, description, icon: Icon }) => (
-              <li key={href} className="border-r border-b border-gray-200">
-                <Link href={href} className="group flex h-full flex-col gap-3 p-6 hover:bg-gray-50 transition-colors">
-                  <Icon className="w-5 h-5 text-gray-900" strokeWidth={1.5} />
-                  <p className="text-2xl font-bold tracking-tight text-gray-900 group-hover:underline underline-offset-4 decoration-1">{label}</p>
-                  <p className="text-[15px] leading-snug text-gray-600">{description}</p>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </div>
+        <ul className="max-w-5xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {SECTIONS.map(({ href, label, description, icon: Icon }) => (
+            <li key={href}>
+              <Link href={href} className="theme-tile group flex h-full flex-col gap-3 p-6 transition-shadow">
+                <Icon className="w-6 h-6 text-blue-600" strokeWidth={1.5} />
+                <p className="text-xl font-medium text-gray-900">{label}</p>
+                <p className="text-[15px] leading-snug text-gray-600">{description}</p>
+              </Link>
+            </li>
+          ))}
+        </ul>
       </main>
     </div>
   );
