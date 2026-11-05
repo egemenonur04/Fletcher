@@ -24,6 +24,7 @@ AUTH_SECRET=…                   # signing key for the session cookie
 AUTH_PASSWORD=…                 # the password you log in with
 REPORT_TOKEN=…                  # optional: 32+ random chars; lets the nightly review read /api/study/review
 WIDGET_TOKEN=…                  # optional: 32+ random chars; the phone widgets in scriptable/ (see its README)
+CRON_SECRET=…                   # 32+ random chars; Vercel Cron sends it to the daily /api/cron/keep-alive
 ```
 
 Optional: `STRAVA_CLIENT_ID` and `STRAVA_CLIENT_SECRET` from your own Strava API app
@@ -31,6 +32,11 @@ Optional: `STRAVA_CLIENT_ID` and `STRAVA_CLIENT_SECRET` from your own Strava API
 `SITE_URL` (the site's address, e.g. `https://example.com` — on Vercel the production domain is
 used when it is unset), `NEXT_PUBLIC_APP_TIMEZONE` (defaults to `Europe/Istanbul` — this is what "today" means for the
 study sessions, and the server runs in a different zone).
+
+`CRON_SECRET` must be set in Vercel's **Production** environment: the daily cron in
+`vercel.json` calls `/api/cron/keep-alive`, one `SELECT 1`, so the free-plan Supabase project is
+never paused for inactivity. Without it the endpoint refuses every call (and the cron run fails).
+Vercel runs crons on production deployments only.
 
 ## Checks
 
