@@ -4,8 +4,8 @@ import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  Bookmark, Calculator, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Clock, Highlighter, Keyboard, LogOut, MapPin,
-  MoreVertical, Ruler, X,
+  Bookmark, Calculator, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Clock, Keyboard, LogOut, MapPin,
+  MoreVertical, PenLine, Ruler, StickyNote, X,
 } from "lucide-react";
 import {
   AnnotatedHtml, HighlightToolbar, NotePanel, NotesList, useTextSelection, type Selected,
@@ -209,6 +209,15 @@ function Screen({ questions, missing }: { questions: SatQuestion[]; missing: num
     return added;
   };
 
+  /** As in Bluebook: with text selected the tool highlights it; with none it opens the list. */
+  const highlightTool = () => {
+    const rect = selected?.rect;
+    const added = highlight("yellow", false);
+    if (!added || !rect) return setSheet((s) => (s === "list" ? null : "list"));
+    clearSelection();
+    setPicked({ id: added.id, rect });
+  };
+
   const active = picked ? notes.find((a) => a.id === picked.id) ?? null : null;
   const editing = sheet && sheet !== "list" ? notes.find((a) => a.id === sheet.note) ?? null : null;
 
@@ -329,7 +338,7 @@ function Screen({ questions, missing }: { questions: SatQuestion[]; missing: num
     );
   }
 
-  const section = questions.every((x) => x.section === q.section) ? `Section ${SECTION_NUMBER[q.section]}: ${SECTION_LABELS[q.section]}` : `Practice: ${SECTION_LABELS[q.section]}`;
+  const section = `Section ${SECTION_NUMBER[q.section]}, Module 1: ${SECTION_LABELS[q.section]}`;
   const clockShown = !clockHidden || (limit > 600 && left <= FINAL_STRETCH);
   const lastMinutes = limit > 600 && left <= FINAL_STRETCH && left > FINAL_STRETCH - 8;
   // Reading and Writing, and a typed answer with its directions, take two panes; Math takes one.
@@ -364,7 +373,7 @@ function Screen({ questions, missing }: { questions: SatQuestion[]; missing: num
           )}
         </div>
         <div className="relative flex justify-end gap-0.5 sm:gap-2">
-          <ToolButton icon={Highlighter} label="Highlights & Notes" active={sheet === "list"} onClick={() => setSheet((s) => (s === "list" ? null : "list"))} />
+          <ToolButton icon={PenLine} second={StickyNote} label="Highlights & Notes" active={sheet === "list"} keepSelection onClick={highlightTool} />
           {hasMath && (
             <>
               <ToolButton icon={Calculator} label="Calculator" active={calculator === "open"} onClick={() => setCalculator((c) => (c === "open" ? "closed" : "open"))} />
@@ -385,6 +394,7 @@ function Screen({ questions, missing }: { questions: SatQuestion[]; missing: num
         </div>
       </header>
       <div className="bb-stripe" />
+      <p className="bb-banner">This is a practice test</p>
 
       {dialog === "directions" && <DirectionsPanel section={q.section} onClose={() => setDialog(null)} />}
       {dialog === "shortcuts" && <ShortcutsPanel onClose={() => setDialog(null)} />}
@@ -498,12 +508,16 @@ function Screen({ questions, missing }: { questions: SatQuestion[]; missing: num
   );
 }
 
-function ToolButton({ icon: Icon, label, active, onClick }: {
-  icon: typeof Calculator; label: string; active: boolean; onClick: () => void;
+function ToolButton({ icon: Icon, second: Second, label, active, keepSelection, onClick }: {
+  icon: typeof Calculator; second?: typeof Calculator; label: string; active: boolean; keepSelection?: boolean; onClick: () => void;
 }) {
   return (
-    <button type="button" onClick={onClick} aria-pressed={active} aria-label={label} className="bb-tool">
-      <Icon className="w-5 h-5" />
+    <button type="button" onClick={onClick} aria-pressed={active} aria-label={label} className="bb-tool"
+      onPointerDown={keepSelection ? (e) => e.preventDefault() : undefined}>
+      <span className="flex items-center gap-0.5">
+        <Icon className="w-4.5 h-4.5" />
+        {Second && <Second className="w-4.5 h-4.5" />}
+      </span>
       <span className="max-sm:hidden">{label}</span>
     </button>
   );

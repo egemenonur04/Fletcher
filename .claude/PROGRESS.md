@@ -20,7 +20,13 @@
       1000 and 375 wide; rows checked in the database. Not checked: a real phone or touch selection
       (only the emulated size), Firefox/Safari. Not built: line reader, two-module adaptive sets,
       zoom. Closing the Browser pane stops rAF, which holds React's streamed page back; that is the
-      test tool, not the site.
+      test tool, not the site. Then matched to the owner's own Bluebook screenshot (2026-11-05): navy
+      "This is a practice test" banner, black dashes, thin divider, "Section 1, Module 1: …" titles,
+      smaller choices; with text selected, Highlights & Notes highlights it as in Bluebook.
+- [x] **SAT vocabulary checked against the owner's PDF** (2026-11-05, "The 1000 Most Common SAT
+      Words"). Despite its title the PDF holds 991 words. All 991 are in `lib/sat-vocab-list.ts` and
+      in the live database (991 words, 1,068 meanings), compared by headword font and by parsing.
+      Nothing was added. The owner may send more words.
 - [x] **Floating back button and SAT Vocabulary quick start** (2026-10-26). The back button was
       noting the visit before the browser had added it, so it had no previous page and did
       nothing useful. It now notes the visit when the history entry is written. The menu watcher
